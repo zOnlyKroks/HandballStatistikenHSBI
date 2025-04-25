@@ -1,18 +1,37 @@
 <template>
   <div class="home">
-    <img alt="Vue logo" src="../assets/logo.png" />
-    <HelloWorld msg="Welcome to Your Vue.js + TypeScript App" />
+    <h1>{{ message }}</h1>
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
-import HelloWorld from "@/components/HelloWorld.vue"; // @ is an alias to /src
+import { defineComponent, onMounted, ref } from "vue";
+import { api } from "../main";
 
 export default defineComponent({
-  name: "HomeView",
-  components: {
-    HelloWorld,
+  setup() {
+    const message = ref("Loading...");
+
+    onMounted(async () => {
+      try {
+        const res = await api.get("/");
+        message.value = res.data;
+      } catch (error) {
+        console.error("Error fetching message:", error);
+        message.value = "Failed to load message from backend.";
+      }
+    });
+
+    return {
+      message,
+    };
   },
 });
 </script>
+
+<style scoped>
+.home {
+  text-align: center;
+  margin-top: 40px;
+}
+</style>
