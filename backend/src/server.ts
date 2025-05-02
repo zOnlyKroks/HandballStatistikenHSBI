@@ -1,5 +1,5 @@
 import express, { Request, Response } from "express";
-import { Sequelize, DataTypes, Model } from "sequelize";
+import { Sequelize, DataTypes, Model, Op } from "sequelize";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import cors from "cors";
@@ -61,6 +61,15 @@ class User extends Model {
   public readonly updatedAt!: Date;
 }
 
+// Blacklisted Token model for token invalidation
+class BlacklistedToken extends Model {
+  public id!: number;
+  public token!: string;
+  public readonly createdAt!: Date;
+  public readonly updatedAt!: Date;
+  public expiresAt!: Date;
+}
+
 // 3) now connect *to* the database and sync your models
 async function start() {
   await ensureDatabase();
@@ -113,6 +122,45 @@ async function start() {
       sequelize,
     }
   );
+
+  // Initialize BlacklistedToken model
+  BlacklistedToken.init(
+    {
+      id: {
+        type: DataTypes.INTEGER.UNSIGNED,
+        autoIncrement: true,
+        primaryKey: true,
+      },
+      token: {
+        type: DataTypes.TEXT,
+        allowNull: false,
+      },
+      expiresAt: {
+        type: DataTypes.DATE,
+        allowNull: false,
+      }
+    },
+    {
+      tableName: "blacklisted_tokens",
+      sequelize,
+    }
+  );
+
+  // Setup a cleaning job for expired tokens (run every hour)
+  setInterval(async () => {
+    try {
+      await BlacklistedToken.destroy({
+        where: {
+          expiresAt: {
+            [Op.lt]: new Date()
+          }
+        }
+      });
+      console.log("✅ Cleaned up expired blacklisted tokens");
+    } catch (error) {
+      console.error("❌ Error cleaning up blacklisted tokens:", error);
+    }
+  }, 60 * 60 * 1000); // Every hour
 
   // .sync() will create tables from your models if they don't exist
   await sequelize.sync({ alter: true });
@@ -240,8 +288,53 @@ async function start() {
     }
   });
 
+  // Logout endpoint (to invalidate tokens)
+  app.post("/auth/logout", authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const token = req.headers.authorization?.split(" ")[1];
+      
+      if (!token) {
+        res.status(400).json({
+          success: false,
+          message: "No token provided",
+        });
+        return;
+      }
+
+      // Decode the token to get its expiration time
+      const decoded = jwt.decode(token) as any;
+      if (!decoded || !decoded.exp) {
+        res.status(400).json({
+          success: false,
+          message: "Invalid token",
+        });
+        return;
+      }
+
+      // Calculate expiration date from token
+      const expiresAt = new Date(decoded.exp * 1000);
+
+      // Add token to blacklist
+      await BlacklistedToken.create({
+        token,
+        expiresAt,
+      });
+
+      res.status(200).json({
+        success: true,
+        message: "Logged out successfully",
+      });
+    } catch (error) {
+      console.error("Logout error:", error);
+      res.status(500).json({
+        success: false,
+        message: "Server error during logout",
+      });
+    }
+  });
+
   // Middleware to verify JWT token
-  const authenticateToken = (req: Request, res: Response, next: Function): void => {
+  async function authenticateToken(req: Request, res: Response, next: Function): Promise<void> {
     // Get token from header
     const authHeader = req.headers["authorization"];
     const token = authHeader && authHeader.split(" ")[1]; // Bearer TOKEN
@@ -255,6 +348,19 @@ async function start() {
     }
 
     try {
+      // Check if token is blacklisted
+      const blacklistedToken = await BlacklistedToken.findOne({
+        where: { token }
+      });
+
+      if (blacklistedToken) {
+        res.status(401).json({
+          success: false,
+          message: "Token has been invalidated. Please log in again.",
+        });
+        return;
+      }
+
       const decoded = jwt.verify(token, JWT_SECRET);
       (req as any).user = decoded;
       next();

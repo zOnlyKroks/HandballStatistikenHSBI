@@ -14,18 +14,37 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import { useRouter } from "vue-router";
+import axios from "axios";
 
 export default defineComponent({
   name: "Home",
   setup() {
     const router = useRouter();
 
-    const handleLogout = () => {
-      // Clear authentication token
-      localStorage.removeItem("authToken");
+    const handleLogout = async () => {
+      try {
+        // Get token from localStorage
+        const token = localStorage.getItem("authToken");
 
-      // Redirect to login page
-      router.push("/auth");
+        if (token) {
+          // Call backend logout endpoint to invalidate token
+          await axios.post(
+            "http://localhost:3001/auth/logout",
+            {},
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+        }
+      } catch (error) {
+        console.error("Logout error:", error);
+      } finally {
+        // Always clear local storage and redirect regardless of API success
+        localStorage.removeItem("authToken");
+        router.push("/auth");
+      }
     };
 
     return {
@@ -41,7 +60,6 @@ export default defineComponent({
   margin: 0 auto;
   padding: 20px;
 }
-
 .home-header {
   display: flex;
   justify-content: space-between;
@@ -50,14 +68,12 @@ export default defineComponent({
   padding-bottom: 15px;
   border-bottom: 1px solid #eee;
 }
-
 .home-header h1 {
   font-size: 24px;
   font-weight: 600;
   color: #333;
   margin: 0;
 }
-
 .logout-btn {
   padding: 8px 16px;
   background-color: #f44336;
@@ -69,11 +85,9 @@ export default defineComponent({
   cursor: pointer;
   transition: background-color 0.3s;
 }
-
 .logout-btn:hover {
   background-color: #d32f2f;
 }
-
 .home-content {
   background-color: white;
   border-radius: 8px;
