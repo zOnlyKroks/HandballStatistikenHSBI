@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import AuthUserModel from "../model/auth/AuthUserModel";
-import UserModel from "../model/user/UserModel";
+import UserDataModel from "../model/user/UserDataModel";
 
 export class PlayerController {
 
@@ -15,7 +15,7 @@ export class PlayerController {
       const user = await AuthUserModel.findByPk(id, {
         attributes: ["id", "name", "email", "createdAt", "updatedAt"],
       });
-      const player = await UserModel.findByPk(id);
+      const player = await UserDataModel.findByPk(id);
 
       if (!user || !player) {
         return res.status(404).json({ success: false, message: "Player not found" });

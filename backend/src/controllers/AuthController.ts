@@ -3,7 +3,8 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import AuthUserModel from "../model/auth/AuthUserModel";
 import BlacklistedTokenModel from "../model/auth/BlacklistedTokenModel";
-import UserModel, { Position, UserRole } from "../model/user/UserModel";
+import UserDataModel from "../model/user/UserDataModel";
+import { Position, UserRole } from "../interface/interfaces";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
 
@@ -25,7 +26,7 @@ export class AuthController {
       const newUser = await AuthUserModel.create({ name, email, password: hashedPassword });
   
 
-      await UserModel.create({
+      await UserDataModel.create({
         id: newUser.id,
         role: UserRole.PLAYER,
         height: -1,
@@ -79,7 +80,11 @@ export class AuthController {
       const decoded = jwt.decode(token) as any;
       if (!decoded?.exp) return res.status(400).json({ success: false, message: "Invalid token" });
 
-      await BlacklistedTokenModel.create({ token, expiresAt: new Date(decoded.exp * 1000) });
+      await BlacklistedTokenModel.create({
+        token,
+        expiresAt: new Date(decoded.exp * 1000),
+        userId: decoded.id 
+      });
 
       res.status(200).json({ success: true, message: "Logged out successfully" });
     } catch (error) {

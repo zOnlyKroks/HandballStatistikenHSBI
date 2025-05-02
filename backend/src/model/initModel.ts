@@ -1,7 +1,8 @@
 import { DataTypes, Op, Sequelize } from "sequelize";
 import AuthUserModel from "./auth/AuthUserModel";
 import BlacklistedTokenModel from "./auth/BlacklistedTokenModel";
-import UserModel, { Position, UserRole } from "./user/UserModel";
+import UserDataModel from "./user/UserDataModel";
+import { Position, UserRole } from "../interface/interfaces";
 
 export default function initModels(sequelize: Sequelize) {
   AuthUserModel.init(
@@ -34,7 +35,7 @@ export default function initModels(sequelize: Sequelize) {
   );
 
   // Initialize UserModel with proper associations and autoIncremented id
-  UserModel.init(
+  UserDataModel.init(
     {
       id: {
         type: DataTypes.INTEGER,
@@ -74,8 +75,8 @@ export default function initModels(sequelize: Sequelize) {
     }
   );
 
-  UserModel.belongsTo(AuthUserModel, { foreignKey: 'id', targetKey: 'id' });
-  AuthUserModel.hasOne(UserModel, { foreignKey: 'id', sourceKey: 'id' });
+  UserDataModel.belongsTo(AuthUserModel, { foreignKey: 'id', targetKey: 'id' });
+  AuthUserModel.hasOne(UserDataModel, { foreignKey: 'id', sourceKey: 'id' });
 
   BlacklistedTokenModel.init(
     {
@@ -84,6 +85,14 @@ export default function initModels(sequelize: Sequelize) {
         primaryKey: true,
         autoIncrement: true, // Auto increment the id field
       },
+      userId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+          model: AuthUserModel,
+          key: "id",
+        },
+      },      
       token: {
         type: DataTypes.STRING,
         allowNull: false,
