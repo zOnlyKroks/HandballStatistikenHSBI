@@ -14,7 +14,7 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import { useRouter } from "vue-router";
-import axios from "axios";
+import { api } from "../net/axios";
 
 export default defineComponent({
   name: "Home",
@@ -28,8 +28,8 @@ export default defineComponent({
 
         if (token) {
           // Call backend logout endpoint to invalidate token
-          await axios.post(
-            "http://localhost:3001/auth/logout",
+          await api.post(
+            "/auth/logout",
             {},
             {
               headers: {
