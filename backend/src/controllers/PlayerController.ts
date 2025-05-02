@@ -3,31 +3,6 @@ import AuthUserModel from "../model/auth/AuthUserModel";
 import UserModel from "../model/user/UserModel";
 
 export class PlayerController {
-  /**
-   * GET /api/players/:id/partial
-   */
-  static async getPartial(req: Request, res: Response) {
-    const { id } = req.params;
-
-    try {
-      const player = await UserModel.findByPk(id);
-
-      if (!player) {
-        return res.status(404).json({ success: false, message: "Player not found" });
-      }
-
-      return res.status(200).json({
-        success: true,
-        player: {
-          role: player.role,
-          position: player.position,
-        },
-      });
-    } catch (error) {
-      console.error("Get partial player error:", error);
-      return res.status(500).json({ success: false, message: "Server error" });
-    }
-  }
 
   /**
    * GET /api/players/:id/full

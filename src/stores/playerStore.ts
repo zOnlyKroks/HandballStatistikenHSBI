@@ -11,30 +11,6 @@ export const usePlayerStore = defineStore("player", {
   }),
   actions: {
     /**
-     * Fetch partial player data by ID and store it
-     */
-    async fetchPartial(id: number) {
-      this.loading = true;
-      this.error = "";
-      try {
-        const res = await api.get<{ player: PlayerPartial }>(
-          `/api/players/${id}/partial`
-        );
-        // Ensure we're setting data properly in the Map
-        if (res.data && res.data.player) {
-          this.players.set(id, res.data.player); // Store player in the map by ID
-        } else {
-          throw new Error("Invalid response format");
-        }
-      } catch (err: any) {
-        this.error =
-          err.response?.data?.message || "Failed to load player (partial)";
-        throw err; // Re-throw the error so the calling component can handle it
-      } finally {
-        this.loading = false;
-      }
-    },
-    /**
      * Fetch full player data by ID and store it
      */
     async fetchFull(id: number) {
