@@ -1,6 +1,8 @@
+// router.ts
 import { createRouter, createWebHistory, RouteRecordRaw } from "vue-router";
 import Home from "@/views/Home.vue";
 import Auth from "@/views/Auth.vue";
+import { useAuthStore } from "@/stores/authStore"; // Import the auth store
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -37,16 +39,16 @@ const router = createRouter({
 
 // Navigation guard for protected routes
 router.beforeEach((to, from, next) => {
+  // Access the Pinia store
+  const auth = useAuthStore();
+
   // Check if the route requires authentication
   if (to.matched.some((record) => record.meta.requiresAuth)) {
-    // Check if user is authenticated
-    const token = localStorage.getItem("authToken");
-
-    if (!token) {
+    if (!auth.isAuthenticated) {
       // Redirect to login page if not authenticated
       next({ name: "Auth" });
     } else {
-      // Allow access to the route
+      // Allow access to the route if authenticated
       next();
     }
   } else {

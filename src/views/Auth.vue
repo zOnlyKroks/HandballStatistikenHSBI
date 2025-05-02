@@ -60,11 +60,7 @@
       </form>
 
       <!-- Register Form -->
-      <form
-        v-if="activeTab === 'register'"
-        class="auth-form"
-        @submit.prevent="handleRegister"
-      >
+      <form v-else class="auth-form" @submit.prevent="handleRegister">
         <div class="form-group">
           <label for="register-name">Full Name</label>
           <input
@@ -137,8 +133,10 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
-import useAuth from "@/composables/useAuth";
+import { defineComponent, ref, reactive, onMounted, nextTick } from "vue";
+import { useRouter } from "vue-router";
+import { api } from "../net/axios";
+import { useAuthStore } from "../stores/authStore";
 
 export default defineComponent({
   name: "Auth",
@@ -149,17 +147,90 @@ export default defineComponent({
     },
   },
   setup(props) {
-    const {
-      activeTab,
-      loginForm,
-      registerForm,
-      errors,
-      isLoading,
-      statusMessage,
-      statusType,
-      handleLogin,
-      handleRegister,
-    } = useAuth(props.defaultTab);
+    const router = useRouter();
+    const auth = useAuthStore();
+    const activeTab = ref<string>(props.defaultTab);
+    const isLoading = ref(false);
+    const statusMessage = ref("");
+    const statusType = ref<"success" | "error">("success");
+
+    const loginForm = reactive({ email: "", password: "" });
+    const registerForm = reactive({
+      name: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+    });
+    const errors = reactive({
+      loginEmail: "",
+      loginPassword: "",
+      registerName: "",
+      registerEmail: "",
+      registerPassword: "",
+      registerConfirmPassword: "",
+    });
+
+    // Check if user is already logged in
+    onMounted(() => {
+      if (auth.isAuthenticated) {
+        router.push("/");
+      }
+    });
+
+    const resetErrors = () => {
+      Object.keys(errors).forEach(
+        (key) => (errors[key as keyof typeof errors] = "")
+      );
+    };
+
+    const handleLogin = async () => {
+      resetErrors();
+      isLoading.value = true;
+
+      try {
+        const { data } = await api.post("/auth/login", loginForm);
+
+        // Set token in auth store
+        auth.setToken(data.token, data.user);
+
+        await router.replace("/home");
+      } catch (err: any) {
+        statusType.value = "error";
+        statusMessage.value = err.response?.data?.message || "Login failed";
+        console.error("Login error:", err);
+      } finally {
+        isLoading.value = false;
+      }
+    };
+
+    const handleRegister = async () => {
+      resetErrors();
+
+      // Validate passwords match
+      if (registerForm.password !== registerForm.confirmPassword) {
+        errors.registerConfirmPassword = "Passwords do not match";
+        return;
+      }
+
+      isLoading.value = true;
+      try {
+        await api.post("/auth/register", registerForm);
+        statusType.value = "success";
+        statusMessage.value = "Account created! Please log in.";
+        activeTab.value = "login";
+
+        // Pre-fill login form with registration email for convenience
+        loginForm.email = registerForm.email;
+        loginForm.password = "";
+      } catch (err: any) {
+        statusType.value = "error";
+        statusMessage.value =
+          err.response?.data?.message || "Registration failed";
+        console.error("Registration error:", err);
+      } finally {
+        isLoading.value = false;
+      }
+    };
 
     return {
       activeTab,

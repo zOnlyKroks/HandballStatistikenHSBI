@@ -1,15 +1,24 @@
 import { createApp } from "vue";
+import { createPinia } from "pinia";
 import App from "./App.vue";
+import { api } from "./net/axios"; // your axios instance
+
+const pinia = createPinia();
+
+const app = createApp(App);
+app.use(pinia);
+app.use(router);
+app.mount("#app");
+
+import { useAuthStore } from "./stores/authStore";
 import router from "./router/router";
-import axios from "axios";
 
-export const api = axios.create({
-  baseURL: "http://localhost:3001",
-  timeout: 10000,
-  headers: {
-    "Content-Type": "application/json",
-  },
-  withCredentials: false,
+const auth = useAuthStore(pinia);
+
+api.interceptors.request.use((config) => {
+  if (auth.token) {
+    config.headers = config.headers || {};
+    config.headers.Authorization = `Bearer ${auth.token}`;
+  }
+  return config;
 });
-
-createApp(App).use(router).mount("#app");

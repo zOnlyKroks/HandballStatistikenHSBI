@@ -3,6 +3,7 @@ import { Sequelize } from "sequelize";
 import cors from "cors";
 import initModels, { setupModelCronjobs } from "./model/initModel";
 import authRoutes from "./routes/authRoutes";
+import playerRoutes from "./routes/playerRoutes";
 
 const app = express();
 
@@ -35,7 +36,8 @@ app.use(
 );
 
 //Custom auth routes
-app.use("/auth", authRoutes)
+app.use("/auth", authRoutes);
+app.use("/api", playerRoutes);
 
 const DB_USER = "root";
 const DB_PASS = "no-password";
@@ -78,7 +80,7 @@ async function start() {
     process.exit(1);
   }
 
-  initModels(sequelize)
+  initModels(sequelize);
   setupModelCronjobs();
 
   await sequelize.sync({ alter: true });

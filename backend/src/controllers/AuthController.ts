@@ -3,6 +3,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import AuthUserModel from "../model/auth/AuthUserModel";
 import BlacklistedTokenModel from "../model/auth/BlacklistedTokenModel";
+import UserModel, { Position, UserRole } from "../model/user/UserModel";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
 
@@ -10,19 +11,29 @@ export class AuthController {
   static async register(req: Request, res: Response) {
     try {
       const { name, email, password } = req.body;
-
+  
       if (!name || !email || !password) {
         return res.status(400).json({ success: false, message: "Name, email, and password are required" });
       }
-
+  
       const existingUser = await AuthUserModel.findOne({ where: { email } });
       if (existingUser) {
         return res.status(400).json({ success: false, message: "User with this email already exists" });
       }
-
+  
       const hashedPassword = await bcrypt.hash(password, 10);
       const newUser = await AuthUserModel.create({ name, email, password: hashedPassword });
+  
 
+      await UserModel.create({
+        id: newUser.id,
+        role: UserRole.PLAYER,
+        height: -1,
+        age: -1,
+        position: Position.UNKNOWN,
+        jerseyNumber: -1,
+      });
+  
       return res.status(201).json({
         success: true,
         message: "User registered successfully",
@@ -32,7 +43,7 @@ export class AuthController {
       console.error("Registration error:", error);
       res.status(500).json({ success: false, message: "Server error during registration" });
     }
-  }
+  }  
 
   static async login(req: Request, res: Response) {
     try {
