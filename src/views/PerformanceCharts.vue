@@ -16,7 +16,7 @@
     <div class="card space-y-6">
       <h3 class="card-title">VL Leistung</h3>
 
-      <div class="performance-grid space-y-6">
+      <div class="performance-grid">
         <div class="performance-item performance-blue">
           <p class="performance-label">Ballkontrolle</p>
           <p class="performance-value">8.2</p>
