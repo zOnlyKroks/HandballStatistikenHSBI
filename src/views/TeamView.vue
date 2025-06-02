@@ -5,7 +5,7 @@
         <TeamStatsCard :team-data="teamData" />
         <TrainingScheduleCard />
       </div>
-      <div class="right-column">
+      <div class="space-y-6 right-column">
         <PerformanceCharts />
       </div>
     </div>

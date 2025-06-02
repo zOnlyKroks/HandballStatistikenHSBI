@@ -1,21 +1,22 @@
 <template>
-  <div>
+  <div class="space-y-6">
     <div class="stats-grid">
       <div class="stat-card stat-green">
         <h3 class="stat-label">Tore Heute</h3>
         <p class="stat-value">3</p>
-        <p class="stat-description">Bisher vs (4)</p>
+        <p class="stat-description">Beschreibung oder so</p>
       </div>
       <div class="stat-card stat-red">
         <h3 class="stat-label">Tore Fehler</h3>
         <p class="stat-value">1</p>
-        <p class="stat-description">Zehlweise vs (2)</p>
+        <p class="stat-description">Beschreibung oder so</p>
       </div>
     </div>
 
-    <div class="card">
+    <div class="card space-y-6">
       <h3 class="card-title">VL Leistung</h3>
-      <div class="performance-grid">
+
+      <div class="performance-grid space-y-6">
         <div class="performance-item performance-blue">
           <p class="performance-label">Ballkontrolle</p>
           <p class="performance-value">8.2</p>
@@ -30,7 +31,7 @@
         </div>
       </div>
 
-      <div class="chart-grid">
+      <div class="chart-grid space-y-6">
         <div class="chart-container">
           <h4 class="chart-title">Team Performance</h4>
           <canvas ref="performanceChart" class="chart-canvas"></canvas>

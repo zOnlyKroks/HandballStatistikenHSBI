@@ -61,7 +61,7 @@ const logout = () => {
   api
     .post("/auth/logout")
     .then(() => {
-      window.location.href = "/auth";
+      window.location.href = "/login";
     })
     .catch((error) => {
       console.error("Logout failed:", error);

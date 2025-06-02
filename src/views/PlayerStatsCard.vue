@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="space-y-6">
     <div class="card">
       <h3 class="card-title">Individualstatistiken</h3>
       <p class="card-subtitle">wie Mannschaft</p>
@@ -18,11 +18,8 @@
 
     <div class="card">
       <h3 class="card-title">Spieler Leistung</h3>
-      <div class="card">
-        <h3 class="card-title">Spieler Leistung</h3>
-        <div class="chart-container">
-          <canvas ref="playerChart" class="chart-canvas"></canvas>
-        </div>
+      <div class="chart-container">
+        <canvas ref="playerChart" class="chart-canvas"></canvas>
       </div>
     </div>
   </div>

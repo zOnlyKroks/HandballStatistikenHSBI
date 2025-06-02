@@ -331,7 +331,7 @@ label {
 .content-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
+  column-gap: 1.5rem;
 }
 
 @media (max-width: 1024px) {
@@ -677,4 +677,8 @@ label {
   .player-photo {
     align-self: center;
   }
+}
+
+.space-y-6 > * + * {
+  margin-top: 1.5rem; /* 6 * 0.25rem (Tailwind uses 1rem = 4) */
 }
