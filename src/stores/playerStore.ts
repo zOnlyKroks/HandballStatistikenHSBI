@@ -27,9 +27,8 @@ export const usePlayerStore = defineStore("player", {
           throw new Error("Invalid response format");
         }
         return res.data.player; // Return the player data for convenience
-      } catch (err: any) {
-        this.error =
-          err.response?.data?.message || "Failed to load player (full)";
+      } catch (err: unknown) {
+        this.error = (err as Error).message || "Failed to load player (full)";
         throw err; // Re-throw the error so the calling component can handle it
       } finally {
         this.loading = false;
@@ -57,8 +56,10 @@ export const usePlayerStore = defineStore("player", {
         } else {
           throw new Error("Invalid response format");
         }
-      } catch (err: any) {
-        this.error = err.response?.data?.message || "Failed to load players";
+      } catch (err: unknown) {
+        this.error =
+          (err as Error & { response?: { data?: { message?: string } } })
+            .response?.data?.message || "Failed to load players";
         throw err; // Re-throw the error so the calling component can handle it
       } finally {
         this.loading = false;

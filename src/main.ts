@@ -1,7 +1,8 @@
 import { createApp } from "vue";
 import { createPinia } from "pinia";
 import App from "./App.vue";
-import { api } from "./net/axios"; // your axios instance
+import { api } from "./net/axios";
+import "./assets/assets.scss";
 
 const pinia = createPinia();
 

@@ -133,7 +133,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, reactive, onMounted, nextTick } from "vue";
+import { defineComponent, ref, reactive, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { api } from "../net/axios";
 import { useAuthStore } from "../stores/authStore";
@@ -194,9 +194,9 @@ export default defineComponent({
         auth.setToken(data.token, data.user);
 
         await router.replace("/home");
-      } catch (err: any) {
+      } catch (err: unknown) {
         statusType.value = "error";
-        statusMessage.value = err.response?.data?.message || "Login failed";
+        statusMessage.value = (err as Error).message || "Login failed";
         console.error("Login error:", err);
       } finally {
         isLoading.value = false;
@@ -222,10 +222,11 @@ export default defineComponent({
         // Pre-fill login form with registration email for convenience
         loginForm.email = registerForm.email;
         loginForm.password = "";
-      } catch (err: any) {
+      } catch (err: unknown) {
         statusType.value = "error";
         statusMessage.value =
-          err.response?.data?.message || "Registration failed";
+          (err as { response?: { data?: { message?: string } } }).response?.data
+            ?.message || "Registration failed";
         console.error("Registration error:", err);
       } finally {
         isLoading.value = false;
