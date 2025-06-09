@@ -6,6 +6,7 @@ import { dataSet } from './dataSet'; // Importiere die dataSet-Klasse
 
 export class htmlParser{
     private htmlContent!: string;
+    //Möglichkeit für infos aus dem filename als attribute
 
     
   constructor(fileName: string) {
@@ -30,17 +31,23 @@ export class htmlParser{
     const dataSetList: dataSet[] = [];
 
     for (const row of tableRows) {
-      const cells = row.querySelectorAll('td');
-      if (cells.length >= 4) {
-        const timestamp = cells[0].text.trim();
-        const playerName = cells[2].text.trim();
-        const action = cells[3].text.trim();
+  const cells = row.querySelectorAll('td');
+  // Debug: console.log('Zellen:', cells.map(cell => cell.text.trim())); // Ausgabe aller Zelleninhalte
+  if (cells.length >= 4) {
+    const timestamp = cells[0].text.trim();
+    const playerName = cells[2].text.trim();
+    const action = cells[3].text.trim();
 
-        const oneDataSet = new dataSet(timestamp, playerName, action);
-        console.log('Debug-Ausgabe des eingelesenen Objekts:', dataSet);
-        dataSetList.push(oneDataSet); // Objekt zur Liste hinzufügen
-      }
-    }
+    /*Debug
+    console.log('Timestamp:', timestamp);
+    console.log('Player Name:', playerName);
+    console.log('Action:', action);
+    */
+
+    const oneDataSet = new dataSet(timestamp, playerName, action);
+    dataSetList.push(oneDataSet); // Objekt zur Liste hinzufügen
+  }
+}
 
     return dataSetList; // Rückgabe der Liste von DataSet-Objekten
   }
@@ -56,7 +63,10 @@ export class htmlParser{
     }
 
     const [saison, spieltag, datum, gegner, spielort] = parts;
-  
+   
+    console.log('Gelesener Dateinameninfos: ')
+    console.log(saison,' | ', spieltag,' | ', datum,' | ', gegner,' | ', spielort);
+    
     return {
     saison,
     spieltag,

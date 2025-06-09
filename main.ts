@@ -1,4 +1,4 @@
-import mysql from "mysql2/promise";
+import * as mysql from "mysql2/promise";
 import { htmlParser } from './htmlParser'; // Importiere die htmlParser-Klasse
 import { dataSet } from './dataSet'; // Importiere die dataSet-Klasse
 
@@ -56,9 +56,16 @@ async function checkDatabase(parsedData: { saison: string, spieltag: string, dat
     }
 
 //Testing:
-    
 
+function test(){
+    console.log("Testfunktion: \n");
+    const testParser = new htmlParser('24-25_1_15.09.2025_TSG Altenhagen-Heepen 4_Gymnasium Heepen.html');
+    testParser.parseFileName;
+    testParser.parseTable;
+    return 0;
+}
 
+test();
 /* 
 1. Unterordner "data" öffnen wo alle Spieldateien (score) mit korrektem Namen liegen Schema:
     Saison_Spieltag_Datum_Gegner_Spielort.html

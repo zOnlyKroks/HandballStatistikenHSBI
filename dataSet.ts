@@ -76,23 +76,18 @@ export class dataSet{
         }
     }
 
-    private isGameActionValid(action:string):boolean{
-        let firstSpaceIndex: number = action.indexOf(" ")       //Ermitteln wo ein Leerzeichen ist
-        let filter: string;
-        let actionsListName: string = "validGameActionsList"    //Grundname der Liste
-        if(firstSpaceIndex !== -1 && !["7m", "2", "Technischer"].includes(action.slice(firstSpaceIndex).trim())){
-            filter = action.slice(firstSpaceIndex).trim();      //Vorfilter auswählen
-        }
-        else{
-            filter = "Andere";                                  //Fängt alle Fälle ab, die nicht mit dem selben Wort beginnen
-        }
-        for(const item of actionsListName.concat(filter)){      //Erstellen des Namensstrings der zugehörigen Liste
-            if(action == item){                                 //Prüfen ob die Gameaction Teil der vorausgewählten Liste ist
-                return true;
-           }
-        }
-        return false;
-    }
+    private isGameActionValid(action: string): boolean {
+    const actionTypes = [
+        ...validGameActionsListParade,
+        ...validGameActionsListGegentor,
+        ...validGameActionsListTor,
+        ...validGameActionsListFehlwurf,
+        ...validGameActionsListSonstige
+    ];
+
+    return actionTypes.includes(action);
+}
+
 
     public getTimeStamp(): string{
         return this.timeStamp;
@@ -118,11 +113,12 @@ export class dataSet{
         else{/*Errorhandling*/}
     }
 
-    public setGameAction(gA:string): void{
-        if(this.isGameActionValid(gA)){
-            this.gameAction = gA;
-        }
-        else{/*Errorhandling*/}
+    public setGameAction(gA: string): void {
+    if (this.isGameActionValid(gA)) {
+        this.gameAction = gA;
+    } else {
+        console.error(`Ungültige Aktion: ${gA}`);
     }
+}
 
 }
