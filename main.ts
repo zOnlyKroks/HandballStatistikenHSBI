@@ -1,6 +1,9 @@
 import * as mysql from "mysql2/promise";
 import { htmlParser } from './htmlParser'; // Importiere die htmlParser-Klasse
 import { dataSet } from './dataSet'; // Importiere die dataSet-Klasse
+import * as fs from 'fs';
+import * as path from 'path';
+
 
 const pool = mysql.createPool({
     host: "localhost",
@@ -13,14 +16,14 @@ const pool = mysql.createPool({
     queueLimit: 0,
 })
 
-async function fillDatabase() {
+async function fillDatabase(Spielsituation: dataSet) {
     const conn = await pool.getConnection();
     await conn.beginTransaction();
 
-    const set : dataSet = new dataSet("", "", "")
+    //const set : dataSet = new dataSet("", "", "");
 
-    await conn.execute('INSERT IGNORE INTO Spielsituation (Nachname, Vorname, Zeitstempel) VALUES (?,?,?)', [
-        "value1","value2", "value3"
+    await conn.execute('INSERT IGNORE INTO Spielsituation (Zeitstempel, Name, Aktion, ) VALUES (?,?,?)', [
+        Spielsituation.getTimeStamp, Spielsituation.getPlayerName, Spielsituation.getGameAction
     ])
 
     await conn.commit();
@@ -55,17 +58,59 @@ async function checkDatabase(parsedData: { saison: string, spieltag: string, dat
     }
     }
 
-//Testing:
+// Funktion, um Dateinamen aus einem Ordner zu lesen
+function readFileNamesFromDirectory(directoryPath: string): string[] {
+    try {
+        // Lese alle Dateien im angegebenen Verzeichnis
+        const files = fs.readdirSync(directoryPath);
 
-function test(){
-    console.log("Testfunktion: \n");
-    const testParser = new htmlParser('24-25_1_15.09.2025_TSG Altenhagen-Heepen 4_Gymnasium Heepen.html');
-    testParser.parseFileName;
-    testParser.parseTable;
+        // Erstelle eine Liste der Dateinamen
+        const fileNames = files.map(file => path.basename(file));
+
+        // Zurückgeben der Liste
+        return fileNames;
+    } catch (error) {
+        console.error('Fehler beim Lesen des Verzeichnisses:', error);
+        return [];
+    }
+}
+
+function main(){
+    // Setzen des Ordners, in dem die Daten sind
+    const filePath = path.join(__dirname, 'data');
+    // Lesen aller Dateinamen in dem Ordner
+    const fileList = readFileNamesFromDirectory(filePath);
+    console.log('Dateien in data:',fileList);
+
+    for (const file in fileList){
+        console.log(fileList[file]);
+        const parser = new htmlParser(fileList[file]);
+        const dataSetList = parser.parseTable();
+
+        /*
+        MISSING:
+        - SQL-CHECK ob Tabelle Spielbericht existiert und CREATE falls nicht // Vielleicht weiter oben sinnvoller?
+
+        - SQL-CHECK ob Spielbericht für dieses Spiel bereits existiert und INSERT falls nicht
+            -> Wenn bereits existiert diese Datei ignorieren und nächste nehmen
+        */
+
+        for(const dataSet in dataSetList){
+            console.log(dataSetList[dataSet]);
+            /*
+            MISSING:
+            - SQL-CHECK ob Tabelle Spielsituationen existiert und CREATE / ERROR falls nicht// Vielleicht weiter oben sinnvoller?
+
+            MAYBE MISSING:
+            - SQL-CHECK ob Spielsituationen für dieses Spiel bereits existiert und INSERT falls nicht
+            - INSERT der Spielsituation mit:fillDatabase(dataSetList[dataSet]); 
+            */
+        }
+    } 
     return 0;
 }
 
-test();
+main();
 /* 
 1. Unterordner "data" öffnen wo alle Spieldateien (score) mit korrektem Namen liegen Schema:
     Saison_Spieltag_Datum_Gegner_Spielort.html

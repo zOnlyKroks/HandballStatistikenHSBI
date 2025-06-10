@@ -38,7 +38,8 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 Object.defineProperty(exports, "__esModule", { value: true });
 var mysql = require("mysql2/promise");
 var htmlParser_1 = require("./htmlParser"); // Importiere die htmlParser-Klasse
-var dataSet_1 = require("./dataSet"); // Importiere die dataSet-Klasse
+var fs = require("fs");
+var path = require("path");
 var pool = mysql.createPool({
     host: "localhost",
     port: 3306,
@@ -49,9 +50,9 @@ var pool = mysql.createPool({
     connectionLimit: 10,
     queueLimit: 0,
 });
-function fillDatabase() {
+function fillDatabase(Spielsituation) {
     return __awaiter(this, void 0, void 0, function () {
-        var conn, set;
+        var conn;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0: return [4 /*yield*/, pool.getConnection()];
@@ -60,11 +61,12 @@ function fillDatabase() {
                     return [4 /*yield*/, conn.beginTransaction()];
                 case 2:
                     _a.sent();
-                    set = new dataSet_1.dataSet("", "", "");
-                    return [4 /*yield*/, conn.execute('INSERT IGNORE INTO Spielsituation (Nachname, Vorname, Zeitstempel) VALUES (?,?,?)', [
-                            "value1", "value2", "value3"
+                    //const set : dataSet = new dataSet("", "", "");
+                    return [4 /*yield*/, conn.execute('INSERT IGNORE INTO Spielsituation (Zeitstempel, Name, Aktion, ) VALUES (?,?,?)', [
+                            Spielsituation.getTimeStamp, Spielsituation.getPlayerName, Spielsituation.getGameAction
                         ])];
                 case 3:
+                    //const set : dataSet = new dataSet("", "", "");
                     _a.sent();
                     return [4 /*yield*/, conn.commit()];
                 case 4:
@@ -122,15 +124,43 @@ function checkDatabase(parsedData, pool) {
         });
     });
 }
-//Testing:
-function test() {
-    console.log("Testfunktion: \n");
-    var testParser = new htmlParser_1.htmlParser('24-25_1_15.09.2025_TSG Altenhagen-Heepen 4_Gymnasium Heepen.html');
-    testParser.parseFileName;
-    testParser.parseTable;
+// Funktion, um Dateinamen aus einem Ordner zu lesen
+function readFileNamesFromDirectory(directoryPath) {
+    try {
+        // Lese alle Dateien im angegebenen Verzeichnis
+        var files = fs.readdirSync(directoryPath);
+        // Erstelle eine Liste der Dateinamen
+        var fileNames = files.map(function (file) { return path.basename(file); });
+        // Zurückgeben der Liste
+        return fileNames;
+    }
+    catch (error) {
+        console.error('Fehler beim Lesen des Verzeichnisses:', error);
+        return [];
+    }
+}
+function main() {
+    // Setzen des Ordners, in dem die Daten sind
+    var filePath = path.join(__dirname, 'data');
+    // Lesen aller Dateinamen in dem Ordner
+    var fileList = readFileNamesFromDirectory(filePath);
+    console.log('Dateien in data:', fileList);
+    for (var file in fileList) {
+        console.log(fileList[file]);
+        var parser = new htmlParser_1.htmlParser(fileList[file]);
+        var dataSetList = parser.parseTable();
+        //console.log(dataSetList);
+        // MYSQL Insert into Spielbericht mit saison, spieltag, datum, gegner, spielort
+        // TBD
+        for (var dataSet_1 in dataSetList) {
+            // 'INSERT INTO spielsituation WHERE Saison = ? AND Spieltag = ? AND Datum = ? AND Gegner = ? AND Spielort = ?',
+            console.log(dataSetList[dataSet_1]);
+            //fillDatabase(dataSetList[dataSet]);
+        }
+    }
     return 0;
 }
-test();
+main();
 /*
 1. Unterordner "data" öffnen wo alle Spieldateien (score) mit korrektem Namen liegen Schema:
     Saison_Spieltag_Datum_Gegner_Spielort.html
