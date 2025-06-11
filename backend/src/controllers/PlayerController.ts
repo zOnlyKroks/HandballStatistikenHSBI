@@ -343,6 +343,10 @@ export class PlayerController {
           tore: stats.tore || 0,
           assists: stats.assists || 0,
           throws: stats.würfe || 0,
+          quoteSeven: parseFloat(stats.quoteSeven) || 0,
+          zeitstrafen: stats.zeitstrafen || 0,
+          roteKarten: stats.roteKarten || 0,
+          paradeQuote: parseFloat(stats.paradeQuote) || 0,
         },
       });
     } catch (error) {

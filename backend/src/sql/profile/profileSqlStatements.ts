@@ -70,19 +70,44 @@ export default class ProfileDBSqlStatements {
 
   static GET_PLAYER_STATS_SIMPLE = `
   SELECT
-    COUNT(DISTINCT sb.idSpiel) as spiele,
+    COUNT(DISTINCT sb.idSpiel) AS spiele,
+
+    -- Tore
     SUM(CASE
-      WHEN ga.action_name IN ('Tor 9m', 'Tor 7m', 'Tor 6m', 'Tor Flügel', 'Tor Gegenstoß', 'Tor Durchbruch')
-      THEN 1 ELSE 0
-    END) as tore,
+      WHEN ga.action_name IN (
+        'Tor 9m', 'Tor 7m', 'Tor 6m', 'Tor Flügel', 'Tor Gegenstoß', 'Tor Durchbruch'
+      ) THEN 1 ELSE 0
+    END) AS tore,
+
+    -- Assists
     SUM(CASE
-      WHEN ga.action_name = 'Assist'
-      THEN 1 ELSE 0
-    END) as assists,
+      WHEN ga.action_name = 'Assist' THEN 1 ELSE 0
+    END) AS assists,
+
+    -- Würfe (shots)
     SUM(CASE
-      WHEN ga.action_name IN ('Tor 9m', 'Tor 7m', 'Tor 6m', 'Tor Flügel', 'Tor Gegenstoß', 'Tor Durchbruch', 'Fehlwurf 9m', 'Fehlwurf 7m', 'Fehlwurf 6m', 'Fehlwurf Flügel', 'Fehlwurf Gegenstoß', 'Fehlwurf Durchbruch')
-      THEN 1 ELSE 0
-    END) as würfe
+      WHEN ga.action_name IN (
+        'Tor 9m', 'Tor 7m', 'Tor 6m', 'Tor Flügel', 'Tor Gegenstoß', 'Tor Durchbruch',
+        'Fehlwurf 9m', 'Fehlwurf 7m', 'Fehlwurf 6m', 'Fehlwurf Flügel', 'Fehlwurf Gegenstoß', 'Fehlwurf Durchbruch'
+      ) THEN 1 ELSE 0
+    END) AS würfe,
+
+    -- 7m Quote
+    SUM(CASE WHEN ga.action_name = 'Tor 7m' THEN 1 ELSE 0 END) /
+    NULLIF(SUM(CASE WHEN ga.action_name IN ('Tor 7m', 'Fehlwurf 7m') THEN 1 ELSE 0 END), 0) AS quoteSeven,
+
+    -- Zeitstrafen
+    SUM(CASE WHEN ga.action_name = 'Zeitstrafe' THEN 1 ELSE 0 END) AS zeitstrafen,
+
+    -- Rote Karten
+    SUM(CASE WHEN ga.action_name = 'Rote Karte' THEN 1 ELSE 0 END) AS roteKarten,
+
+    -- Paradequote
+    SUM(CASE WHEN ga.action_name = 'Parade' THEN 1 ELSE 0 END) /
+    NULLIF(SUM(CASE WHEN ga.action_name IN (
+      'Parade', 'Tor 6m', 'Tor 7m', 'Tor 9m', 'Tor Flügel', 'Tor Gegenstoß', 'Tor Durchbruch'
+    ) THEN 1 ELSE 0 END), 0) AS paradeQuote
+
   FROM Spielbericht sb
   JOIN Mannschaft m ON sb.Mannschaft_id = m.id
   JOIN User u ON u.mannschaft_id = m.id

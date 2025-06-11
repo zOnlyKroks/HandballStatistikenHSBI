@@ -188,6 +188,26 @@
             </div>
 
             <div class="stat-card stat-green">
+              <p class="stat-label">7m Quote</p>
+              <p class="stat-value">{{ baseStats?.quoteSeven }}</p>
+            </div>
+
+            <div class="stat-card stat-green">
+              <p class="stat-label">Zeitstrafen</p>
+              <p class="stat-value">{{ baseStats?.zeitstrafen }}</p>
+            </div>
+
+            <div class="stat-card stat-green">
+              <p class="stat-label">Rote Karten</p>
+              <p class="stat-value">{{ baseStats?.roteKarten }}</p>
+            </div>
+
+            <div class="stat-card stat-green">
+              <p class="stat-label">Parade Quote</p>
+              <p class="stat-value">{{ baseStats?.paradeQuote }}</p>
+            </div>
+
+            <div class="stat-card stat-green">
               <p class="stat-label">Tore</p>
               <p class="stat-value">{{ baseStats?.tore || 0 }}</p>
               <p class="stat-description">Gesamt erzielt</p>

@@ -64,6 +64,10 @@ export interface User {
     tore: number;
     assists: number;
     throws: number;
+    quoteSeven: number;
+    zeitstrafen: number;
+    roteKarten: number;
+    paradeQuote: number;
   };
 }
 
