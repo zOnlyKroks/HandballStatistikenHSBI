@@ -1,26 +1,41 @@
 import express from "express";
-import { Sequelize } from "sequelize";
+import mysql from "mysql2/promise";
 import cors from "cors";
-import initModels, { setupModelCronjobs } from "./model/initModel";
 import authRoutes from "./routes/authRoutes";
 import playerRoutes from "./routes/playerRoutes";
+import teamRoutes from "./routes/teamRoutes";
+import miscRoutes from "./routes/miscRoutes";
+import nodeCron from "node-cron";
+import staticDataImporter from "./helpers/staticDataImporter";
+import createTables from "./helpers/tableCreator";
+import { importDataSets } from "./importer/importHandler";
 
 const app = express();
 
-// Middleware
-app.use(express.json());
+const pool = mysql.createPool({
+  host: "localhost",
+  port: 3306,
+  user: "root",
+  password: "no-password",
+  database: "handball",
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0,
+});
+
+app.use(express.json({ limit: "50mb" }));
+app.use(express.urlencoded({ limit: "50mb", extended: true }));
+
 app.use(
   cors({
     origin: (origin, callback) => {
       if (!origin) return callback(null, true);
-
       if (
         origin.startsWith("http://localhost:") ||
         origin.startsWith("https://localhost:")
       ) {
         return callback(null, true);
       }
-
       callback(new Error("Not allowed by CORS"));
     },
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
@@ -35,9 +50,10 @@ app.use(
   })
 );
 
-//Custom auth routes
 app.use("/auth", authRoutes);
 app.use("/api", playerRoutes);
+app.use("/team", teamRoutes);
+app.use("/misc", miscRoutes);
 
 const DB_USER = "root";
 const DB_PASS = "no-password";
@@ -46,48 +62,68 @@ const DB_PORT = 3306;
 const DB_NAME = "handball";
 
 async function ensureDatabase() {
-  const rootSequelize = new Sequelize({
-    username: DB_USER,
-    password: DB_PASS,
+  const connection = await mysql.createConnection({
     host: DB_HOST,
     port: DB_PORT,
-    dialect: "mysql",
-    logging: true,
+    user: DB_USER,
+    password: DB_PASS,
   });
 
-  await rootSequelize.query(`CREATE DATABASE IF NOT EXISTS \`${DB_NAME}\`;`);
-  await rootSequelize.close();
+  await connection.execute(`CREATE DATABASE IF NOT EXISTS \`${DB_NAME}\`;`);
+  await connection.end();
+}
+
+async function setupCronjobs() {
+  nodeCron.schedule("0 0 * * *", async () => {
+    try {
+      await pool.execute(`
+        DELETE FROM BlacklistedTokens 
+        WHERE expiresAt < NOW()
+      `);
+      console.log("✅ Expired tokens cleaned up");
+    } catch (error) {
+      console.error("❌ Error cleaning up expired tokens:", error);
+    }
+  });
+
+  console.log("✅ Cronjobs setup completed");
 }
 
 async function start() {
-  await ensureDatabase();
-
-  const sequelize = new Sequelize({
-    username: DB_USER,
-    password: DB_PASS,
-    database: DB_NAME,
-    host: DB_HOST,
-    port: DB_PORT,
-    dialect: "mysql",
-    logging: true,
-  });
-
   try {
-    await sequelize.authenticate();
-    console.log("✅ MySQL connected");
+    await ensureDatabase();
+    console.log("✅ Database ensured");
+
+    await createTables(pool);
+
+    await staticDataImporter(pool);
+
+    await importDataSets(pool);
+
+    setupCronjobs();
+    const PORT = process.env.PORT || 3001;
+
+    app.listen(PORT, () => {
+      console.log(`🚀 Server running on port ${PORT}`);
+    });
   } catch (err) {
-    console.error("❌ Unable to connect to MySQL:", err);
+    console.error("❌ Unable to start server:", err);
     process.exit(1);
   }
-
-  initModels(sequelize);
-  setupModelCronjobs();
-
-  await sequelize.sync({ alter: true });
-  console.log("✅ Database & tables synchronized");
-
-  const PORT = process.env.PORT || 3001;
-  app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
 }
+
+process.on("SIGINT", async () => {
+  console.log("🔄 Shutting down gracefully...");
+  await pool.end();
+  process.exit(0);
+});
+
+process.on("SIGTERM", async () => {
+  console.log("🔄 Shutting down gracefully...");
+  await pool.end();
+  process.exit(0);
+});
+
+export { pool };
 
 start();

@@ -16,8 +16,11 @@
     "cors": "^2.8.5",
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
-    "mysql2": "^3.14.0",
-    "sequelize": "^6.37.7"
+    "mysql2": "^3.14.1",
+    "node-cron": "^4.1.0",
+    "node-html-parser": "^7.0.1",
+    "nodemon": "^3.1.10",
+    "uuidv4": "^6.2.13"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",
