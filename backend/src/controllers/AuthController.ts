@@ -75,13 +75,12 @@ export default class AuthController {
         sanitize(authUserUuid),
         sanitize(vorname),
         sanitize(nachname),
-        sanitize(mannschaftName),
-        sanitize(ligaName),
         sanitize(-1), // koerpergroesse
         sanitize("1900-01-01"), // geburtsdatum
-        sanitize(positionId), // positionId
+        sanitize(positionId),
         sanitize(-1), // trikotnummer
-        false, // isAdmin
+        sanitize(-1),
+        false,
       ];
       await conn.execute<ResultSetHeader>(
         AuthDBSqlStatements.CREATE_USER,

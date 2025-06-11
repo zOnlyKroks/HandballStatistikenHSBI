@@ -22,6 +22,21 @@ export interface User {
   league_level: number | null;
   profileImage: string;
   isAdmin: boolean;
+  accuracy: {
+    gesamtSchuesse: number;
+    schuesseAufZiel: number;
+    genauigkeitProzent: number;
+  };
+  statistics: {
+    spiele: number;
+    tore: number;
+    assists: number;
+    throws: number;
+    quoteSeven: number;
+    zeitstrafen: number;
+    roteKarten: number;
+    paradeQuote: number;
+  };
 }
 
 export interface Mannschaft {

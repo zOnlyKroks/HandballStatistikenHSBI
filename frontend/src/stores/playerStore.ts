@@ -1,29 +1,33 @@
 import { defineStore } from "pinia";
 import { api } from "../net/axios";
-import { AuthUser, User } from "../types/types";
+import { User } from "../types/types";
 
 export const usePlayerStore = defineStore("player", {
   state: () => ({
-    players: new Map<string, AuthUser | User>(),
+    players: new Map<string, User>(),
     loading: false,
     error: "" as string,
   }),
+
+  getters: {
+    playersArray: (state) => {
+      return Array.from(state.players.values());
+    },
+  },
+
   actions: {
     /**
      * Fetch full player data by ID and store it
      */
-    async fetchFull(id: string) {
+    async fetchFull(id: string): Promise<User> {
       this.loading = true;
       this.error = "";
       try {
-        const res = await api.get<{ player: User }>(`/api/players/${id}/full`);
+        const res = (await api.get(`/api/players/${id}/full`)).data
+          .player as User;
 
-        if (res.data && res.data.player) {
-          this.players.set(id, res.data.player);
-        } else {
-          throw new Error("Invalid response format");
-        }
-        return res.data.player;
+        this.players.set(id, res);
+        return res;
       } catch (err: unknown) {
         this.error = (err as Error).message || "Failed to load player (full)";
         throw err;
@@ -32,40 +36,23 @@ export const usePlayerStore = defineStore("player", {
       }
     },
 
-    async loadAccuracy(id: string) {
-      const accData = (await api.get(`/api/players/${id}/accuracy`)).data
-        .accuracy;
-
-      const player = await this.getUser(id);
-
-      if (!player) {
-        console.error(`Player with ID ${id} not found`);
-        return;
+    async getTeamMembers(id: number | null): Promise<User[]> {
+      if (!id) {
+        id = -1;
       }
 
-      player.accuracy = {
-        gesamtSchuesse: accData.gesamtSchuesse,
-        schuesseAufZiel: accData.schuesseAufZiel,
-        genauigkeitProzent: accData.genauigkeitProzent,
-      };
+      const response = await api.get(`/team/${id}/players`);
 
-      this.players.set(id, player);
-    },
+      const data = response.data as User[];
+      const full: User[] = [];
 
-    async loadBaseStatistics(id: string) {
-      const basicStatistics = (
-        await api.get(`/api/players/${id}/base-statistics`)
-      ).data.statistics;
+      for (let i = 0; i < data.length; i++) {
+        const player = data[i];
 
-      const player = await this.getUser(id);
-
-      if (player) {
-        player.statistics = basicStatistics;
-
-        this.players.set(id, player);
-      } else {
-        console.error(`Player with ID ${id} not found`);
+        full.push(await this.fetchFull(player.uuid));
       }
+
+      return full;
     },
 
     /**
@@ -76,23 +63,25 @@ export const usePlayerStore = defineStore("player", {
       this.error = "";
       this.loading = false;
     },
-    /**
-     * Remove a player by ID
-     */
+
     removePlayer(id: string) {
-      this.players.delete(id); // Remove player by ID
+      this.players.delete(id);
     },
 
     async getUser(id: string): Promise<User | null> {
       const player = this.players.get(id);
-
       if (!player) {
         const user = await this.fetchFull(id);
-
         return user;
       } else {
-        return player && !("password" in player) ? player : null;
+        return player && "vorname" in player ? player : null;
       }
+    },
+
+    async setPlayerProfileData(id: string, data: Partial<User>) {
+      await api.post(`/api/players/${id}/profileData`, {
+        profileData: data,
+      });
     },
   },
 });

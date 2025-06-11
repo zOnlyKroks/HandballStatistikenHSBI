@@ -30,30 +30,6 @@ router.get(
 );
 
 router.get(
-  "/players/:id/accuracy",
-  async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      await PlayerController.getAccuracy(req, res);
-    } catch (error) {
-      console.error("Error getting basic player data:", error);
-      next(error);
-    }
-  }
-);
-
-router.get(
-  "/players/:id/base-statistics",
-  async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      await PlayerController.getBaseStatistics(req, res);
-    } catch (error) {
-      console.error("Error getting basic player data:", error);
-      next(error);
-    }
-  }
-);
-
-router.get(
   "/positions",
   async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -96,19 +72,6 @@ router.post(
       await PlayerController.setProfileImage(req, res);
     } catch (error) {
       console.error("Error setting profile image:", error);
-      next(error);
-    }
-  }
-);
-
-// GET /players/:id/profileImage
-router.get(
-  "/players/:id/profileImage",
-  async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      await PlayerController.getProfileImage(req, res);
-    } catch (error) {
-      console.error("Error getting profile image:", error);
       next(error);
     }
   }

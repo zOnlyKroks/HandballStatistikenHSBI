@@ -32,40 +32,15 @@
 
           <div class="player-info">
             <div class="player-photo">
-              <div v-if="profileImageLoading" class="photo-loading">
-                <svg class="loading-spinner" viewBox="0 0 24 24">
-                  <circle
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    stroke-width="4"
-                    fill="none"
-                    stroke-dasharray="31.416"
-                    stroke-dashoffset="31.416"
-                  >
-                    <animate
-                      attributeName="stroke-dasharray"
-                      dur="2s"
-                      values="0 31.416;15.708 15.708;0 31.416"
-                      repeatCount="indefinite"
-                    />
-                    <animate
-                      attributeName="stroke-dashoffset"
-                      dur="2s"
-                      values="0;-15.708;-31.416"
-                      repeatCount="indefinite"
-                    />
-                  </circle>
-                </svg>
-                <span class="photo-label">Lädt...</span>
-              </div>
-              <div v-else-if="profileImageUrl" class="photo-container">
+              <div
+                v-if="player.profileImage && hasValidImage"
+                class="photo-container"
+              >
                 <img
-                  :src="profileImageUrl"
+                  :src="imageSrc"
                   :alt="`${player.vorname} ${player.nachname}`"
                   class="player-image"
-                  @error="handleImageError"
+                  @error="onImageError"
                 />
               </div>
               <div v-else class="photo-placeholder">
@@ -189,22 +164,22 @@
 
             <div class="stat-card stat-green">
               <p class="stat-label">7m Quote</p>
-              <p class="stat-value">{{ baseStats?.quoteSeven }}</p>
+              <p class="stat-value">{{ baseStats?.quoteSeven || 0 }}</p>
             </div>
 
             <div class="stat-card stat-green">
               <p class="stat-label">Zeitstrafen</p>
-              <p class="stat-value">{{ baseStats?.zeitstrafen }}</p>
+              <p class="stat-value">{{ baseStats?.zeitstrafen || 0 }}</p>
             </div>
 
             <div class="stat-card stat-green">
               <p class="stat-label">Rote Karten</p>
-              <p class="stat-value">{{ baseStats?.roteKarten }}</p>
+              <p class="stat-value">{{ baseStats?.roteKarten || 0 }}</p>
             </div>
 
             <div class="stat-card stat-green">
               <p class="stat-label">Parade Quote</p>
-              <p class="stat-value">{{ baseStats?.paradeQuote }}</p>
+              <p class="stat-value">{{ baseStats?.paradeQuote || 0 }}</p>
             </div>
 
             <div class="stat-card stat-green">
@@ -337,9 +312,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch, defineProps } from "vue";
+import { computed, onMounted, watch, defineProps, ref } from "vue";
 import { usePlayerStore } from "../stores/playerStore";
-import { api } from "../net/axios";
 import { User } from "../types/types";
 
 const playerStore = usePlayerStore();
@@ -353,8 +327,17 @@ const player = computed(() =>
     ? (playerStore.players.get(props.player.uuid) as User | undefined)
     : undefined
 );
-const profileImageUrl = ref<string | null>(null);
-const profileImageLoading = ref(false);
+
+const imageSrc = computed(() => {
+  const raw = player.value?.profileImage?.trim();
+  if (!raw) return undefined;
+  return raw.startsWith("data:") ? raw : `data:image/jpeg;base64,${raw}`;
+});
+
+const hasValidImage = ref(true);
+function onImageError() {
+  hasValidImage.value = false;
+}
 
 const baseStats = computed(() => player.value?.statistics || null);
 const accuracy = computed(() => player.value?.accuracy || null);
@@ -369,38 +352,9 @@ const accuracyStatus = computed(() => {
     : "Verbesserungspotential";
 });
 
-const loadProfileImage = async () => {
-  if (!props.player?.uuid) return;
-
-  try {
-    profileImageLoading.value = true;
-    profileImageUrl.value = null;
-
-    const { data } = await api.get(
-      `/api/players/${props.player.uuid}/profileImage`
-    );
-    if (data.success && data.profileImage) {
-      profileImageUrl.value = data.profileImage;
-    }
-  } catch (error) {
-    console.error("Profile image load failed:", error);
-  } finally {
-    profileImageLoading.value = false;
-  }
-};
-
-const handleImageError = () => {
-  profileImageUrl.value = null;
-};
-
 onMounted(async () => {
   if (props.player?.uuid) {
     await playerStore.fetchFull(props.player.uuid);
-    await Promise.all([
-      playerStore.loadBaseStatistics(props.player.uuid),
-      playerStore.loadAccuracy(props.player.uuid),
-      loadProfileImage(),
-    ]);
   }
 });
 
@@ -409,21 +363,6 @@ watch(
   async (newId) => {
     if (newId) {
       await playerStore.fetchFull(newId);
-      await playerStore.loadBaseStatistics(newId);
-      await playerStore.loadAccuracy(newId);
-      await loadProfileImage();
-    }
-  }
-);
-
-watch(
-  () => player.value?.uuid,
-  async (newUuid) => {
-    if (newUuid) {
-      await playerStore.fetchFull(newUuid);
-      await playerStore.loadBaseStatistics(newUuid);
-      await playerStore.loadAccuracy(newUuid);
-      await loadProfileImage();
     }
   }
 );

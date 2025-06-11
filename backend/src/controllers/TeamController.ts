@@ -83,23 +83,12 @@ WHERE u.mannschaft_id IS NULL OR u.mannschaft_id = -1
     }
 
     try {
-      // First verify the team exists
-      const [teamCheck] = await pool.execute<RowDataPacket[]>(
-        `SELECT id FROM Mannschaft WHERE id = ?`,
-        [teamId]
-      );
-
-      if (teamCheck.length === 0) {
-        return res.status(404).json({ error: "Team not found" });
-      }
-
-      // Update player's team assignment
       const [result] = await pool.execute<ResultSetHeader>(
         `
         UPDATE \`User\`
         SET mannschaft_id = ?
         WHERE uuid = ?
-        AND (mannschaft_id IS NULL OR mannschaft_id = 1)
+        AND (mannschaft_id IS NULL OR mannschaft_id = -1)
         `,
         [teamId, playerId]
       );
@@ -134,7 +123,7 @@ WHERE u.mannschaft_id IS NULL OR u.mannschaft_id = -1
       const [result] = await pool.execute<ResultSetHeader>(
         `
         UPDATE \`User\`
-        SET mannschaft_id = NULL
+        SET mannschaft_id = -1
         WHERE uuid = ?
         `,
         [playerId]
@@ -245,9 +234,8 @@ WHERE u.mannschaft_id IS NULL OR u.mannschaft_id = -1
       conn = await pool.getConnection();
       await conn.beginTransaction();
 
-      // Remove all trainers from team first
       await conn.execute(
-        `UPDATE \`User\` SET mannschaft_id = NULL WHERE mannschaft_id = ?`,
+        `UPDATE \`User\` SET mannschaft_id = -1, position_id = -1 WHERE mannschaft_id = ?`,
         [id]
       );
 

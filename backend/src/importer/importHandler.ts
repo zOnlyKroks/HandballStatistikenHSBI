@@ -77,8 +77,6 @@ async function handleInsertDataSet(
   }
 }
 
-const MANNSCHAFT_ID = -1;
-
 function convertSeasonToInt(seasonString: string): number {
   const parts = seasonString.split("-");
   if (parts.length !== 2) {
@@ -94,22 +92,32 @@ export async function conditionallyCreateSpielbericht(
   const base = path.basename(fileName, path.extname(fileName));
   const parts = base.split("_");
 
-  if (parts.length < 5) {
+  if (parts.length < 6) {
     throw new Error(`Filename "${fileName}" isn't in the expected format.`);
   }
 
-  const saisonString = parts[0]; // e.g. "24-25"
+  const teamName = parts[0]; // e.g. "VfL Herford 2"
+  const saisonString = parts[1]; // e.g. "24-25"
   const saison = convertSeasonToInt(saisonString); // Convert to 2425
-  const spieltag = parseInt(parts[1], 10);
-  const [day, month, year] = parts[2].split(".");
+  const spieltag = parseInt(parts[2], 10);
+  const [day, month, year] = parts[3].split(".");
 
   if (!day || !month || !year) {
-    throw new Error(`Date part "${parts[2]}" isn't DD.MM.YYYY`);
+    throw new Error(`Date part "${parts[3]}" isn't DD.MM.YYYY`);
   }
 
   const datum = `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
-  const gegner = parts[3];
-  const spielort = parts.slice(4).join(" ");
+  const gegner = parts[4];
+  const spielort = parts.slice(5).join(" ");
+
+  const teamQuery = `SELECT id FROM Mannschaft WHERE name = ?`;
+  const [teamRows] = await connection.execute(teamQuery, [teamName]);
+
+  if (!Array.isArray(teamRows) || teamRows.length === 0) {
+    throw new Error(`No team found with name: ${teamName}`);
+  }
+
+  const mannschaftId = (teamRows[0] as any).id;
 
   const [rows]: any[] = await connection.query(
     `SELECT idSpiel
@@ -120,7 +128,7 @@ export async function conditionallyCreateSpielbericht(
        AND Datum = ?
        AND Gegner = ?
        AND Spielort = ?`,
-    [MANNSCHAFT_ID, spieltag, saison, datum, gegner, spielort]
+    [mannschaftId, spieltag, saison, datum, gegner, spielort]
   );
 
   if (rows.length > 0) {
@@ -131,7 +139,7 @@ export async function conditionallyCreateSpielbericht(
     `INSERT INTO Spielbericht
      (Mannschaft_id, Spieltag, Saison, Datum, Gegner, Spielort)
      VALUES (?, ?, ?, ?, ?, ?)`,
-    [MANNSCHAFT_ID, spieltag, saison, datum, gegner, spielort]
+    [mannschaftId, spieltag, saison, datum, gegner, spielort]
   );
 
   return result.insertId as number;
@@ -142,6 +150,17 @@ export async function importDataSets(pool: mysql.Pool): Promise<number> {
   const fileList = readFileNamesFromDirectory(dataDir);
 
   let processedFiles = 0;
+
+  const connection = await pool.getConnection();
+
+  await connection.execute("DELETE FROM GameSituation");
+  await connection.execute("DELETE FROM Spielbericht");
+
+  await connection.execute("ALTER TABLE GameSituation AUTO_INCREMENT = 1");
+  await connection.execute("ALTER TABLE Spielbericht AUTO_INCREMENT = 1");
+
+  connection.commit();
+  connection.release();
 
   for (const file of fileList) {
     console.log("→ Processing:", file);
@@ -172,7 +191,7 @@ export async function importDataSets(pool: mysql.Pool): Promise<number> {
         await connection.rollback();
         continue;
       }
-      
+
       let insertedCount = 0;
       for (const dataSet of dataSetList) {
         try {

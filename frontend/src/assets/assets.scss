@@ -670,3 +670,15 @@ label {
 .space-y-6 > * + * {
   margin-top: 1.5rem; /* 6 * 0.25rem (Tailwind uses 1rem = 4) */
 }
+
+.nav-dropdown {
+  align-self: center;
+}
+
+.nav-select {
+  width: auto;
+  min-width: 160px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  height: 2.5rem;
+}

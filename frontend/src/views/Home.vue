@@ -35,6 +35,19 @@
                 Admin
               </button>
               <button class="nav-tab logout" @click="logout()">Logout</button>
+              <div class="nav-dropdown">
+                <select
+                  v-model="selectedOption"
+                  class="form-control nav-select"
+                  @change="updateMatchCountAndReload"
+                >
+                  <option value="option1">Letztes Spiel</option>
+                  <option value="option2">Letzte 2 Spiele</option>
+                  <option value="option3">Letzte 5 Spiele</option>
+                  <option value="option4">Letzte 10 Spiele</option>
+                  <option value="option5">Alle Spiele</option>
+                </select>
+              </div>
             </div>
           </div>
         </div>
@@ -69,33 +82,74 @@
             </div>
           </div>
         </div>
-        <!-- Player View with current player data -->
-        <PlayerView v-else :player="store.actualUser" />
+        <PlayerView
+          v-else
+          :key="`player-${viewKey}-${lookbackVersion}`"
+          :player="store.actualUser"
+        />
       </div>
-      <!-- Team View -->
-      <TeamView v-else-if="currentView === 'team'" />
-      <PlayerManagement v-else-if="currentView === 'management'" />
-      <AdminManagement v-else-if="currentView === 'admin'" />
+      <TeamView
+        v-else-if="currentView === 'team'"
+        :key="`team-${viewKey}-${lookbackVersion}`"
+      />
+      <PlayerManagement
+        v-else-if="currentView === 'management'"
+        :key="`management-${viewKey}-${lookbackVersion}`"
+      />
+      <AdminManagement
+        v-else-if="currentView === 'admin'"
+        :key="`admin-${viewKey}-${lookbackVersion}`"
+      />
     </main>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, watch } from "vue";
 import PlayerView from "./PlayerView.vue";
 import TeamView from "./TeamView.vue";
 import { api } from "../net/axios";
 import { useAuthStore } from "../stores/authStore";
 import PlayerManagement from "./PlayerManagement.vue";
 import AdminManagement from "./AdminManagement.vue";
+import { LookbackSettings } from "./util/LookbackSettings";
+import { usePlayerStore } from "../stores/playerStore";
 
+const selectedOption = ref<
+  "option1" | "option2" | "option3" | "option4" | "option5"
+>("option1");
 const currentView = ref<"team" | "player" | "management" | "admin">("player");
-
+const lookbackVersion = ref(0);
+const viewKey = ref(0);
 const store = useAuthStore();
+const playerStore = usePlayerStore();
 
 const switchView = (view: "team" | "player" | "management" | "admin") => {
+  if (currentView.value !== view) {
+    viewKey.value++;
+  }
   currentView.value = view;
 };
+
+const updateMatchCountAndReload = () => {
+  const map = {
+    option1: 1,
+    option2: 2,
+    option3: 5,
+    option4: 10,
+    option5: 9999,
+  };
+
+  LookbackSettings.lastMatches = map[selectedOption.value] || 1;
+
+  playerStore.clear();
+
+  lookbackVersion.value++;
+};
+
+watch(lookbackVersion, () => {
+  viewKey.value++;
+});
 
 const authUserIsTrainer = () => {
   return store.actualUser.position_id === 8;

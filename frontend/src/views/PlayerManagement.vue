@@ -318,6 +318,7 @@ import { ref, onMounted, reactive } from "vue";
 import { api } from "../net/axios";
 import { useAuthStore } from "../stores/authStore";
 import type { User, Position } from "../types/types";
+import { usePlayerStore } from "../stores/playerStore";
 
 const store = useAuthStore();
 const players = ref<User[]>([]);
@@ -341,7 +342,6 @@ const newPlayer = ref({
   trikotnummer: null as number | null,
 });
 
-// Image handling state
 const playerImages = ref<Record<string, string>>({});
 const imageLoadingStates = ref<Record<string, boolean>>({});
 const imageUploadingStates = ref<Record<string, boolean>>({});
@@ -361,10 +361,9 @@ async function fetchPlayers() {
   try {
     loading.value = true;
     errorMessage.value = "";
-    const response = await api.get(
-      `/team/${store.actualUser.mannschaftId}/players`
+    players.value = await usePlayerStore().getTeamMembers(
+      store.actualUser.mannschaftId
     );
-    players.value = response.data;
   } catch (error) {
     console.error("Failed to fetch players:", error);
     errorMessage.value = "Fehler beim Laden der Spielerdaten";
@@ -384,14 +383,11 @@ async function loadAllPlayerImages() {
 async function loadPlayerImage(playerUuid: string) {
   try {
     imageLoadingStates.value[playerUuid] = true;
-    const response = await api.get(`/api/players/${playerUuid}/profileImage`);
+    const player = await usePlayerStore().fetchFull(playerUuid);
 
-    if (response.data.success && response.data.profileImage) {
-      playerImages.value[playerUuid] = response.data.profileImage;
-    }
+    playerImages.value[playerUuid] = player.profileImage;
   } catch (error) {
     console.error(`Failed to load image for player ${playerUuid}:`, error);
-    // Don't show error for missing images as it's expected
   } finally {
     imageLoadingStates.value[playerUuid] = false;
   }

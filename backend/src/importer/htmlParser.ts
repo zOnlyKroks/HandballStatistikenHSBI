@@ -32,21 +32,14 @@ export class htmlParser {
         const playerName = cells[2].text.trim();
         const action = cells[3].text.trim();
 
-        /*Debug
-    console.log('Timestamp:', timestamp);
-    console.log('Player Name:', playerName);
-    console.log('Action:', action);
-    */
-
         const oneDataSet = new dataSet(timestamp, playerName, action);
-        dataSetList.push(oneDataSet); // Objekt zur Liste hinzufügen
+        dataSetList.push(oneDataSet);
       }
     }
 
-    return dataSetList; // Rückgabe der Liste von DataSet-Objekten
+    return dataSetList;
   }
 
-  // Funktion zum Parsen des Dateinamens
   public parseFileName(fileName: string): {
     saison: string;
     spieltag: string;

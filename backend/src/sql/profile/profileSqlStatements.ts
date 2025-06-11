@@ -49,74 +49,194 @@ export default class ProfileDBSqlStatements {
       uuid = ?
   `;
 
-  static GET_PLAYER_ACCURACY = `
-      SELECT 
-        ga.action_name,
-        COUNT(*) as count
-      FROM GameSituation gs
-      JOIN Spielbericht sb ON gs.game_report_id = sb.idSpiel
-      JOIN Mannschaft m ON sb.Mannschaft_id = m.id
-      JOIN User u ON u.mannschaft_id = m.id
-      JOIN GameActions ga ON gs.action_id = ga.id_action
-      WHERE u.uuid = ?
-        AND gs.first_name = u.vorname 
-        AND gs.last_name = u.nachname
-        AND ga.action_name IN (
-          'Tor 9m', 'Tor 7m', 'Tor 6m', 'Tor Flügel', 'Tor Gegenstoß', 'Tor Durchbruch',
-          'Fehlwurf 9m', 'Fehlwurf 7m', 'Fehlwurf 6m', 'Fehlwurf Flügel', 'Fehlwurf Gegenstoß', 'Fehlwurf Durchbruch'
-        )
-      GROUP BY ga.action_name
-    `;
+  static GET_PLAYER_ACCURACY = (limit: string) => `
+    SELECT 
+      ga.action_name,
+      COUNT(*) AS count
+    FROM GameSituation gs
+    JOIN User u 
+      ON gs.first_name = u.vorname 
+      AND gs.last_name = u.nachname
+      AND u.uuid = ?
+    JOIN GameActions ga 
+      ON gs.action_id = ga.id_action
+    JOIN (
+      SELECT idSpiel 
+      FROM Spielbericht
+      WHERE Mannschaft_id = (SELECT mannschaft_id FROM User WHERE uuid = ?)
+      ORDER BY Datum DESC
+      LIMIT ${Number(limit)}
+    ) AS recent_games ON gs.game_report_id = recent_games.idSpiel
+    WHERE ga.action_name IN (
+      'Tor 9m', 'Tor 7m', 'Tor 6m', 'Tor Flügel', 'Tor Gegenstoß', 'Tor Durchbruch',
+      'Fehlwurf 9m', 'Fehlwurf 7m', 'Fehlwurf 6m', 'Fehlwurf Flügel', 'Fehlwurf Gegenstoß', 'Fehlwurf Durchbruch'
+    )
+    GROUP BY ga.action_name
+  `;
 
-  static GET_PLAYER_STATS_SIMPLE = `
-  SELECT
-    COUNT(DISTINCT sb.idSpiel) AS spiele,
+  static GET_PLAYER_GAMES = (limit: string) => `
+    SELECT COUNT(DISTINCT sb.idSpiel) AS spiele
+    FROM Spielbericht sb
+    JOIN Mannschaft m ON sb.Mannschaft_id = m.id
+    JOIN User u ON u.mannschaft_id = m.id
+    JOIN (
+      SELECT sb_inner.idSpiel
+      FROM Spielbericht sb_inner
+      JOIN User u2 ON sb_inner.Mannschaft_id = u2.mannschaft_id
+      WHERE u2.uuid = ?
+      ORDER BY sb_inner.datum DESC
+      LIMIT ${Number(limit)}
+    ) AS recent ON sb.idSpiel = recent.idSpiel
+    WHERE u.uuid = ?
+  `;
 
-    -- Tore
-    SUM(CASE
+  static GET_PLAYER_GOALS = (limit: string) => `
+    SELECT SUM(CASE
       WHEN ga.action_name IN (
         'Tor 9m', 'Tor 7m', 'Tor 6m', 'Tor Flügel', 'Tor Gegenstoß', 'Tor Durchbruch'
       ) THEN 1 ELSE 0
-    END) AS tore,
+    END) AS tore
+    FROM Spielbericht sb
+    JOIN Mannschaft m ON sb.Mannschaft_id = m.id
+    JOIN User u ON u.mannschaft_id = m.id
+    JOIN (
+      SELECT sb_recent.idSpiel
+      FROM Spielbericht sb_recent
+      JOIN User u_recent ON sb_recent.Mannschaft_id = u_recent.mannschaft_id
+      WHERE u_recent.uuid = ?
+      ORDER BY sb_recent.datum DESC
+      LIMIT ${Number(limit)}
+    ) AS recent_games ON sb.idSpiel = recent_games.idSpiel
+    LEFT JOIN GameSituation gs ON gs.game_report_id = sb.idSpiel
+      AND gs.first_name = u.vorname AND gs.last_name = u.nachname
+    LEFT JOIN GameActions ga ON gs.action_id = ga.id_action
+    WHERE u.uuid = ?
+  `;
 
-    -- Assists
-    SUM(CASE
-      WHEN ga.action_name = 'Assist' THEN 1 ELSE 0
-    END) AS assists,
+  static GET_PLAYER_ASSISTS = (limit: string) => `
+    SELECT SUM(CASE WHEN ga.action_name = 'Assist' THEN 1 ELSE 0 END) AS assists
+    FROM Spielbericht sb
+    JOIN Mannschaft m ON sb.Mannschaft_id = m.id
+    JOIN User u ON u.mannschaft_id = m.id
+    JOIN (
+      SELECT sb_recent.idSpiel
+      FROM Spielbericht sb_recent
+      JOIN User u_recent ON sb_recent.Mannschaft_id = u_recent.mannschaft_id
+      WHERE u_recent.uuid = ?
+      ORDER BY sb_recent.datum DESC
+      LIMIT ${Number(limit)}
+    ) AS recent_games ON sb.idSpiel = recent_games.idSpiel
+    LEFT JOIN GameSituation gs ON gs.game_report_id = sb.idSpiel
+      AND gs.first_name = u.vorname AND gs.last_name = u.nachname
+    LEFT JOIN GameActions ga ON gs.action_id = ga.id_action
+    WHERE u.uuid = ?
+  `;
 
-    -- Würfe (shots)
-    SUM(CASE
+  static GET_PLAYER_SHOTS = (limit: string) => `
+    SELECT SUM(CASE
       WHEN ga.action_name IN (
         'Tor 9m', 'Tor 7m', 'Tor 6m', 'Tor Flügel', 'Tor Gegenstoß', 'Tor Durchbruch',
         'Fehlwurf 9m', 'Fehlwurf 7m', 'Fehlwurf 6m', 'Fehlwurf Flügel', 'Fehlwurf Gegenstoß', 'Fehlwurf Durchbruch'
       ) THEN 1 ELSE 0
-    END) AS würfe,
+    END) AS würfe
+    FROM Spielbericht sb
+    JOIN Mannschaft m ON sb.Mannschaft_id = m.id
+    JOIN User u ON u.mannschaft_id = m.id
+    JOIN (
+      SELECT sb_recent.idSpiel
+      FROM Spielbericht sb_recent
+      JOIN User u_recent ON sb_recent.Mannschaft_id = u_recent.mannschaft_id
+      WHERE u_recent.uuid = ?
+      ORDER BY sb_recent.datum DESC
+      LIMIT ${Number(limit)}
+    ) AS recent_games ON sb.idSpiel = recent_games.idSpiel
+    LEFT JOIN GameSituation gs ON gs.game_report_id = sb.idSpiel
+      AND gs.first_name = u.vorname AND gs.last_name = u.nachname
+    LEFT JOIN GameActions ga ON gs.action_id = ga.id_action
+    WHERE u.uuid = ?
+  `;
 
-    -- 7m Quote
-    SUM(CASE WHEN ga.action_name = 'Tor 7m' THEN 1 ELSE 0 END) /
-    NULLIF(SUM(CASE WHEN ga.action_name IN ('Tor 7m', 'Fehlwurf 7m') THEN 1 ELSE 0 END), 0) AS quoteSeven,
+  static GET_PLAYER_SEVEN_METER = (limit: string) => `
+    SELECT 
+      SUM(CASE WHEN ga.action_name = 'Tor 7m' THEN 1 ELSE 0 END) AS sevenGoals,
+      SUM(CASE WHEN ga.action_name IN ('Tor 7m', 'Fehlwurf 7m') THEN 1 ELSE 0 END) AS sevenAttempts
+    FROM Spielbericht sb
+    JOIN Mannschaft m ON sb.Mannschaft_id = m.id
+    JOIN User u ON u.mannschaft_id = m.id
+    JOIN (
+      SELECT sb_recent.idSpiel
+      FROM Spielbericht sb_recent
+      JOIN User u_recent ON sb_recent.Mannschaft_id = u_recent.mannschaft_id
+      WHERE u_recent.uuid = ?
+      ORDER BY sb_recent.datum DESC
+      LIMIT ${Number(limit)}
+    ) AS recent_games ON sb.idSpiel = recent_games.idSpiel
+    LEFT JOIN GameSituation gs ON gs.game_report_id = sb.idSpiel
+      AND gs.first_name = u.vorname AND gs.last_name = u.nachname
+    LEFT JOIN GameActions ga ON gs.action_id = ga.id_action
+    WHERE u.uuid = ?
+  `;
 
-    -- Zeitstrafen
-    SUM(CASE WHEN ga.action_name = 'Zeitstrafe' THEN 1 ELSE 0 END) AS zeitstrafen,
+  static GET_TIME_PENALTIES = (limit: string) => `
+    SELECT SUM(CASE WHEN ga.action_name = 'Zeitstrafe' THEN 1 ELSE 0 END) AS zeitstrafen
+    FROM Spielbericht sb
+    JOIN Mannschaft m ON sb.Mannschaft_id = m.id
+    JOIN User u ON u.mannschaft_id = m.id
+    JOIN (
+      SELECT sb_recent.idSpiel
+      FROM Spielbericht sb_recent
+      JOIN User u_recent ON sb_recent.Mannschaft_id = u_recent.mannschaft_id
+      WHERE u_recent.uuid = ?
+      ORDER BY sb_recent.datum DESC
+      LIMIT ${Number(limit)}
+    ) AS recent_games ON sb.idSpiel = recent_games.idSpiel
+    LEFT JOIN GameSituation gs ON gs.game_report_id = sb.idSpiel
+      AND gs.first_name = u.vorname AND gs.last_name = u.nachname
+    LEFT JOIN GameActions ga ON gs.action_id = ga.id_action
+    WHERE u.uuid = ?
+  `;
 
-    -- Rote Karten
-    SUM(CASE WHEN ga.action_name = 'Rote Karte' THEN 1 ELSE 0 END) AS roteKarten,
+  static GET_RED_CARDS = (limit: string) => `
+    SELECT SUM(CASE WHEN ga.action_name = 'Rote Karte' THEN 1 ELSE 0 END) AS roteKarten
+    FROM Spielbericht sb
+    JOIN Mannschaft m ON sb.Mannschaft_id = m.id
+    JOIN User u ON u.mannschaft_id = m.id
+    JOIN (
+      SELECT sb_recent.idSpiel
+      FROM Spielbericht sb_recent
+      JOIN User u_recent ON sb_recent.Mannschaft_id = u_recent.mannschaft_id
+      WHERE u_recent.uuid = ?
+      ORDER BY sb_recent.datum DESC
+      LIMIT ${Number(limit)}
+    ) AS recent_games ON sb.idSpiel = recent_games.idSpiel
+    LEFT JOIN GameSituation gs ON gs.game_report_id = sb.idSpiel
+      AND gs.first_name = u.vorname AND gs.last_name = u.nachname
+    LEFT JOIN GameActions ga ON gs.action_id = ga.id_action
+    WHERE u.uuid = ?
+  `;
 
-    -- Paradequote
-    SUM(CASE WHEN ga.action_name = 'Parade' THEN 1 ELSE 0 END) /
-    NULLIF(SUM(CASE WHEN ga.action_name IN (
-      'Parade', 'Tor 6m', 'Tor 7m', 'Tor 9m', 'Tor Flügel', 'Tor Gegenstoß', 'Tor Durchbruch'
-    ) THEN 1 ELSE 0 END), 0) AS paradeQuote
-
-  FROM Spielbericht sb
-  JOIN Mannschaft m ON sb.Mannschaft_id = m.id
-  JOIN User u ON u.mannschaft_id = m.id
-  LEFT JOIN GameSituation gs ON gs.game_report_id = sb.idSpiel
-    AND gs.first_name = u.vorname
-    AND gs.last_name = u.nachname
-  LEFT JOIN GameActions ga ON gs.action_id = ga.id_action
-  WHERE u.uuid = ?
-`;
+  static GET_SAVE_QUOTE = (limit: string) => `
+    SELECT 
+      SUM(CASE WHEN ga.action_name = 'Parade' THEN 1 ELSE 0 END) AS paraden,
+      SUM(CASE WHEN ga.action_name IN (
+        'Parade', 'Tor 6m', 'Tor 7m', 'Tor 9m', 'Tor Flügel', 'Tor Gegenstoß', 'Tor Durchbruch'
+      ) THEN 1 ELSE 0 END) AS gegnerWuerfe
+    FROM Spielbericht sb
+    JOIN Mannschaft m ON sb.Mannschaft_id = m.id
+    JOIN User u ON u.mannschaft_id = m.id
+    JOIN (
+      SELECT sb_recent.idSpiel
+      FROM Spielbericht sb_recent
+      JOIN User u_recent ON sb_recent.Mannschaft_id = u_recent.mannschaft_id
+      WHERE u_recent.uuid = ?
+      ORDER BY sb_recent.datum DESC
+      LIMIT ${Number(limit)}
+    ) AS recent_games ON sb.idSpiel = recent_games.idSpiel
+    LEFT JOIN GameSituation gs ON gs.game_report_id = sb.idSpiel
+      AND gs.first_name = u.vorname AND gs.last_name = u.nachname
+    LEFT JOIN GameActions ga ON gs.action_id = ga.id_action
+    WHERE u.uuid = ?
+  `;
 
   static GET_POSITIONS = `
     SELECT id AS id, position_title AS title

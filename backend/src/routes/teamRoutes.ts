@@ -34,7 +34,7 @@ router.get(
 );
 
 router.post(
-  "/:id/add-player/:playerId",
+  "/:teamId/add-player/:playerId",
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       await TeamController.addPlayerToTeam(req, res);

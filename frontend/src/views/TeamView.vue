@@ -4,26 +4,22 @@
     <div class="header-card">
       <div class="header-flex">
         <h1 class="page-title">Mannschaftsübersicht</h1>
-        <p class="team-name">{{ teamName }}</p>
+        <p class="team-name">{{ getTeamName() }}</p>
       </div>
     </div>
 
     <!-- Team Statistics -->
     <div class="stats-grid">
       <div class="stat-card stat-green">
-        <p class="stat-label">Tore (Gesamt)</p>
+        <p class="stat-label">Tore</p>
         <p class="stat-value">{{ teamStats.totalGoals }}</p>
       </div>
       <div class="stat-card stat-blue">
-        <p class="stat-label">Assists (Gesamt)</p>
+        <p class="stat-label">Assists</p>
         <p class="stat-value">{{ teamStats.totalAssists }}</p>
       </div>
-      <div class="stat-card stat-purple">
-        <p class="stat-label">Durchschn. Bewertung</p>
-        <p class="stat-value">{{ teamStats.averageRating }}</p>
-      </div>
       <div class="stat-card stat-red">
-        <p class="stat-label">Spiele (Gesamt)</p>
+        <p class="stat-label">Spiele</p>
         <p class="stat-value">{{ teamStats.totalGames }}</p>
       </div>
     </div>
@@ -53,13 +49,11 @@
               <th>Name</th>
               <th>Position</th>
               <th>Trikotnummer</th>
-              <th>Spiele</th>
-              <th>Tore</th>
             </tr>
           </thead>
           <tbody>
             <tr
-              v-for="(player, index) in players"
+              v-for="(player, index) in teamMembers"
               :key="player.uuid"
               class="player-row"
               @click="selectPlayer(index)"
@@ -69,10 +63,10 @@
                   <div class="player-photo">
                     <img
                       v-if="player.profileImage"
-                      :src="player.profileImage"
+                      :src="getProfileImageUrl(player.profileImage)"
                       :alt="`${player.vorname} ${player.nachname}`"
                       class="player-image-thumb"
-                      @error="player.profileImage = ''"
+                      @error="handleImageError($event, player)"
                     />
                     <svg
                       v-else
@@ -96,8 +90,6 @@
               </td>
               <td>{{ player.position }}</td>
               <td>{{ player.trikotnummer }}</td>
-              <td>{{ player.games || 0 }}</td>
-              <td>{{ player.goals || 0 }}</td>
             </tr>
           </tbody>
         </table>
@@ -131,70 +123,81 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, nextTick } from "vue";
+import { ref, onMounted, nextTick } from "vue";
 import PlayerView from "./PlayerView.vue";
-import { api } from "../net/axios";
 import { useAuthStore } from "../stores/authStore";
 import type { User } from "../types/types";
+import { usePlayerStore } from "../stores/playerStore";
 
 const store = useAuthStore();
-const players = ref<User[]>([]);
+const playerStore = usePlayerStore();
 const loading = ref(true);
 const selectedPlayer = ref<User | null>(null);
 const selectedPlayerKey = ref(Date.now());
+const teamMembers = ref<User[]>([]);
 const teamStats = ref({
   totalGoals: 0,
   totalAssists: 0,
-  averageRating: 0,
   totalGames: 0,
 });
 
-const teamName = computed(() => store.actualUser.mannschaftName);
+const getTeamName = () => {
+  return store.actualUser.mannschaftName || "Unbekannt";
+};
+
+function getProfileImageUrl(imageData: unknown) {
+  if (!imageData) return "";
+  // Ensure we have a string to call startsWith on
+  const dataStr = typeof imageData === "string" ? imageData : "";
+
+  if (dataStr.startsWith("data:image")) {
+    return dataStr;
+  }
+  // Fallback: assume base64 JPEG data
+  return `data:image/jpeg;base64,${dataStr}`;
+}
+
+const handleImageError = (e: Event, player: User) => {
+  const img = e.target as HTMLImageElement;
+  img.src = "";
+  player.profileImage = "";
+};
 
 onMounted(async () => {
   try {
-    const teamId = store.actualUser.mannschaftId;
-    const { data } = await api.get(`/team/${teamId}/players`);
-    players.value = data;
-
-    // Profilbilder laden
-    await Promise.all(
-      players.value.map(async (player) => {
-        try {
-          const { data: imgData } = await api.get(
-            `/api/players/${player.uuid}/profileImage`
-          );
-          player.profileImage = imgData.success ? imgData.profileImage : null;
-        } catch {
-          player.profileImage = "";
-        }
-      })
+    teamMembers.value = await playerStore.getTeamMembers(
+      store.actualUser.mannschaftId
     );
 
-    // Teamstatistiken berechnen
     teamStats.value = {
-      totalGoals: players.value.reduce((sum, p) => sum + (p.goals || 0), 0),
-      totalAssists: players.value.reduce((sum, p) => sum + (p.assists || 0), 0),
-      averageRating: calculateAverageRating(),
-      totalGames: players.value.reduce((sum, p) => sum + (p.games || 0), 0),
+      totalGoals: teamMembers.value.reduce((sum: number, p: User) => {
+        const goals = parseInt(p.statistics?.tore?.toString() || "0", 10);
+        return sum + (isNaN(goals) ? 0 : goals);
+      }, 0),
+      totalAssists: teamMembers.value.reduce((sum: number, p: User) => {
+        const assists = parseInt(p.statistics?.assists?.toString() || "0", 10);
+        return sum + (isNaN(assists) ? 0 : assists);
+      }, 0),
+      totalGames: Math.max(
+        ...teamMembers.value.map((p: User) => {
+          const games = parseInt(p.statistics?.spiele?.toString() || "0", 10);
+          return isNaN(games) ? 0 : games;
+        })
+      ),
     };
   } catch (error) {
-    console.error("Failed to fetch team players:", error);
+    console.error("Error loading team members:", error);
   } finally {
     loading.value = false;
   }
 });
 
-const calculateAverageRating = () => {
-  const total = players.value.reduce((sum, p) => sum + (p.rating || 0), 0);
-  const count = players.value.filter((p) => p.rating).length;
-  return count ? Math.round((total / count) * 10) / 10 : 0;
-};
-
 const selectPlayer = (index: number) => {
   selectedPlayer.value = null;
   nextTick(() => {
-    selectedPlayer.value = { ...players.value[index] };
+    selectedPlayer.value = {
+      ...teamMembers.value[index],
+    };
     selectedPlayerKey.value = Date.now();
   });
 };

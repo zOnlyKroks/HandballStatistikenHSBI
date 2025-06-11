@@ -3,29 +3,51 @@
     <!-- Header -->
     <div class="header-card">
       <div class="header-flex">
-        <h1 class="page-title">Team Administration</h1>
-        <button class="btn btn-green" @click="openCreateModal">
-          <svg
-            class="icon"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-            />
-          </svg>
-          Create New Team
-        </button>
+        <h1 class="page-title">Team & User Administration</h1>
+        <div class="header-actions">
+          <button class="btn btn-blue" @click="openUserCreateModal">
+            <svg
+              class="icon"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+              />
+            </svg>
+            Create User
+          </button>
+          <button class="btn btn-green" @click="openCreateModal">
+            <svg
+              class="icon"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+              />
+            </svg>
+            Create Team
+          </button>
+        </div>
       </div>
     </div>
 
-    <!-- Teams List -->
-    <div class="card">
-      <h3 class="card-title">
+    <!-- Tab Navigation -->
+    <div class="tab-nav">
+      <button
+        class="tab-button"
+        :class="{ active: activeTab === 'teams' }"
+        @click="activeTab = 'teams'"
+      >
         <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
             stroke-linecap="round"
@@ -34,351 +56,121 @@
             d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
           />
         </svg>
-        Teams Overview
-        <span v-if="refreshing" class="refresh-indicator">
-          <svg class="loading-spinner icon" viewBox="0 0 24 24">
-            <circle
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              stroke-width="4"
-              fill="none"
-              opacity="0.25"
-            />
-            <path
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-            />
-          </svg>
-        </span>
-      </h3>
-
-      <div v-if="loading" class="status-message">Loading teams...</div>
-
-      <div v-else-if="teams.length === 0" class="no-teams">
-        <svg
-          class="icon large-icon"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
+        Teams
+      </button>
+      <button
+        class="tab-button"
+        :class="{ active: activeTab === 'users' }"
+        @click="activeTab = 'users'"
+      >
+        <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
             stroke-linecap="round"
             stroke-linejoin="round"
             stroke-width="2"
-            d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+            d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9.7a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"
           />
         </svg>
-        <p>No teams created yet</p>
-        <button class="btn btn-green" @click="openCreateModal">
-          Create First Team
-        </button>
-      </div>
-
-      <div v-else class="teams-grid">
-        <div v-for="team in teams" :key="team.id" class="team-card">
-          <div class="team-header">
-            <div>
-              <h3>{{ team.name }}</h3>
-              <p class="team-league">
-                {{ team.leagueName }} (Level {{ team.leagueLevel }})
-              </p>
-            </div>
-            <div class="team-actions">
-              <button
-                class="btn-action"
-                title="Edit Team"
-                @click="openEditModal(team)"
-              >
-                <svg
-                  class="icon"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                  />
-                </svg>
-              </button>
-              <button
-                class="btn-action btn-danger"
-                title="Delete Team"
-                @click="confirmDelete(team)"
-              >
-                <svg
-                  class="icon"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                  />
-                </svg>
-              </button>
-            </div>
-          </div>
-
-          <div class="trainers-section">
-            <h4>Trainers ({{ team.trainers.length }}):</h4>
-            <div v-if="team.trainers.length === 0" class="no-trainers">
-              <svg
-                class="icon"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
-                />
-              </svg>
-              <span>No trainers assigned</span>
-            </div>
-            <div v-else class="trainers-list">
-              <div
-                v-for="trainer in team.trainers"
-                :key="trainer.uuid"
-                class="trainer-item"
-              >
-                <div class="trainer-avatar">
-                  <div class="avatar-placeholder">
-                    {{ getInitials(trainer.vorname, trainer.nachname) }}
-                  </div>
-                </div>
-                <div class="trainer-info">
-                  <span class="trainer-name"
-                    >{{ trainer.vorname }} {{ trainer.nachname }}</span
-                  >
-                  <small class="trainer-email">{{ trainer.email }}</small>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+        Users
+      </button>
     </div>
 
-    <!-- Create/Edit Team Modal -->
-    <div v-if="showModal" class="modal-backdrop" @click="closeModal">
-      <div class="modal" @click.stop>
-        <h2>{{ editingTeam ? "Edit Team" : "Create New Team" }}</h2>
+    <!-- Teams Tab Content -->
+    <TeamsTab
+      v-if="activeTab === 'teams'"
+      :teams="teamsWithTrainers"
+      :loading="loading"
+      :refreshing="refreshing"
+      @open-create-modal="openCreateModal"
+      @open-edit-modal="openEditModal"
+      @delete-team="confirmDelete"
+    />
 
-        <div class="form-group">
-          <label for="team-name">Team Name *</label>
-          <input
-            id="team-name"
-            v-model="form.name"
-            type="text"
-            placeholder="Enter team name"
-            required
-            :disabled="editingTeam !== null"
-            @keyup.enter="saveTeam"
-          />
-        </div>
+    <!-- Users Tab Content -->
+    <UsersTab
+      v-if="activeTab === 'users'"
+      :users="filteredUsersForDisplay"
+      :loading="loadingUsers"
+      :search-query="userSearchQuery"
+      @create-user="openUserCreateModal"
+      @edit-user="openUserEditModal"
+      @delete-user="confirmUserDelete"
+    />
 
-        <div v-if="!editingTeam" class="form-group">
-          <label for="league-select">League *</label>
-          <select
-            id="league-select"
-            v-model="form.leagueId"
-            required
-            class="league-select"
-          >
-            <option value="">Select a league</option>
-            <option
-              v-for="league in leagues"
-              :key="league.id"
-              :value="league.id"
-            >
-              {{ league.name }} (Level {{ league.level }})
-            </option>
-          </select>
-        </div>
+    <!-- Modals -->
+    <TeamModal
+      v-if="showModal"
+      :leagues="leagues"
+      :users="filteredUsers"
+      :editing-team="editingTeam"
+      :saving="saving"
+      :form="form"
+      :can-save="canSaveTeam"
+      @close="closeModal"
+      @save="saveTeam"
+      @update:form="updateForm"
+    />
 
-        <div class="form-group">
-          <label>Assign Trainers</label>
-          <div class="search-container">
-            <input
-              v-model="trainerSearch"
-              type="text"
-              placeholder="Search for users to assign as trainers..."
-              class="search-input"
-            />
-          </div>
+    <UserModal
+      v-if="showUserModal"
+      :teams="teams"
+      :editing-user="editingUser"
+      :saving="savingUser"
+      :form="userForm"
+      :can-save="canSaveUser"
+      @close="closeUserModal"
+      @save="saveUser"
+      @update:form="updateUserForm"
+    />
 
-          <div class="trainers-selection">
-            <div v-if="filteredUsers.length === 0" class="no-results">
-              <svg
-                class="icon"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
-              {{
-                trainerSearch
-                  ? "No users found matching your search"
-                  : "No users available"
-              }}
-            </div>
-            <div v-else class="users-list">
-              <div
-                v-for="user in filteredUsers"
-                :key="user.uuid"
-                class="user-item"
-              >
-                <input
-                  :id="`user-${user.uuid}`"
-                  v-model="form.trainerIds"
-                  type="checkbox"
-                  :value="user.uuid"
-                  class="user-checkbox"
-                />
-                <label :for="`user-${user.uuid}`" class="user-label">
-                  <div class="user-avatar">
-                    <div class="avatar-placeholder">
-                      {{ getInitials(user.vorname, user.nachname) }}
-                    </div>
-                  </div>
-                  <div class="user-info">
-                    <span class="user-name"
-                      >{{ user.vorname }} {{ user.nachname }}</span
-                    >
-                    <small class="user-email">{{ user.email }}</small>
-                  </div>
-                </label>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="modal-actions">
-          <button class="btn btn-gray" @click="closeModal">Cancel</button>
-          <button
-            class="btn btn-green"
-            :disabled="!canSaveTeam || saving"
-            @click="saveTeam"
-          >
-            <svg v-if="saving" class="loading-spinner" viewBox="0 0 24 24">
-              <circle
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                stroke-width="4"
-                fill="none"
-                opacity="0.25"
-              />
-              <path
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-              />
-            </svg>
-            {{
-              saving ? "Saving..." : editingTeam ? "Update Team" : "Create Team"
-            }}
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Delete Confirmation Modal -->
-    <div
+    <DeleteConfirmationModal
       v-if="teamToDelete"
-      class="modal-backdrop"
-      @click="teamToDelete = null"
-    >
-      <div class="modal" @click.stop>
-        <h2>Delete Team</h2>
-        <p>
-          Are you sure you want to delete the team
-          <strong>"{{ teamToDelete.name }}"</strong>?
-        </p>
-        <div class="warning">
-          <svg
-            class="icon"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.664-.833-2.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"
-            />
-          </svg>
-          This action cannot be undone. All assigned trainers will be removed
-          from this team.
-        </div>
-        <div class="modal-actions">
-          <button class="btn btn-gray" @click="teamToDelete = null">
-            Cancel
-          </button>
-          <button class="btn btn-red" @click="deleteTeam">Delete Team</button>
-        </div>
-      </div>
-    </div>
+      type="team"
+      :name="teamToDelete.name"
+      @cancel="teamToDelete = null"
+      @confirm="deleteTeam"
+    />
+
+    <DeleteConfirmationModal
+      v-if="userToDelete"
+      type="user"
+      :name="`${userToDelete.vorname} ${userToDelete.nachname}`"
+      @cancel="userToDelete = null"
+      @confirm="deleteUser"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed } from "vue";
+import { ref, computed, onMounted, onUnmounted } from "vue";
 import { api } from "../net/axios";
-import type { User } from "../types/types";
+import type { User, Team, League } from "../types/types";
+import DeleteConfirmationModal from "./admin/DeleteConfirmationModal.vue";
+import UserModal from "./admin/UserModal.vue";
+import TeamModal from "./admin/TeamModal.vue";
+import UsersTab from "./admin/UsersTab.vue";
+import TeamsTab from "./admin/TeamsTab.vue";
+import { usePlayerStore } from "../stores/playerStore";
 
-interface Team {
-  id: number;
-  name: string;
-  leagueId: number;
-  leagueName: string;
-  leagueLevel: number;
-  trainers: User[];
-}
-
-interface League {
-  id: number;
-  name: string;
-  level: number;
-  anzahl_mannschaften: number;
-}
-
-interface TrainerAssignment {
-  uuid: string;
-  teamId: number;
-}
+const playerStore = usePlayerStore();
 
 // State
+const activeTab = ref("teams");
 const loading = ref(true);
+const loadingUsers = ref(false);
 const refreshing = ref(false);
 const saving = ref(false);
+const savingUser = ref(false);
 const teams = ref<Team[]>([]);
 const leagues = ref<League[]>([]);
-const allUsers = ref<User[]>([]);
 const showModal = ref(false);
+const showUserModal = ref(false);
 const editingTeam = ref<Team | null>(null);
+const editingUser = ref<User | null>(null);
 const teamToDelete = ref<Team | null>(null);
+const userToDelete = ref<User | null>(null);
 const trainerSearch = ref("");
-
-// Interval reference for cleanup
-let refreshInterval: number | null;
+const userSearchQuery = ref("");
 
 // Form data
 const form = ref({
@@ -387,34 +179,65 @@ const form = ref({
   trainerIds: [] as string[],
 });
 
-// Computed
+const userForm = ref({
+  vorname: "",
+  nachname: "",
+  email: "",
+  password: "",
+  teamId: null as number | null,
+  positionId: -1,
+});
+
+const teamsWithTrainers = ref<Team[]>([]);
+
+const enrichTeams = async () => {
+  const enriched = await Promise.all(
+    teams.value.map(async (team) => {
+      await playerStore.getTeamMembers(team.id);
+      const trainers = playerStore.playersArray.filter(
+        (user) => user.position_id === 8 && user.mannschaftId === team.id
+      );
+      return { ...team, trainers };
+    })
+  );
+  teamsWithTrainers.value = enriched;
+};
+
 const filteredUsers = computed(() => {
   const search = trainerSearch.value.toLowerCase().trim();
-  if (!search) return allUsers.value;
-
-  return allUsers.value.filter((user) => {
-    const fullName = `${user.vorname} ${user.nachname}`.toLowerCase();
-    return (
-      fullName.includes(search) ||
+  return playerStore.playersArray.filter(
+    (user) =>
+      `${user.vorname} ${user.nachname}`.toLowerCase().includes(search) ||
       (user.email && user.email.toLowerCase().includes(search))
-    );
-  });
+  );
+});
+
+const filteredUsersForDisplay = computed(() => {
+  const search = userSearchQuery.value.toLowerCase().trim();
+  return playerStore.playersArray.filter(
+    (user) =>
+      `${user.vorname} ${user.nachname}`.toLowerCase().includes(search) ||
+      (user.email && user.email.toLowerCase().includes(search))
+  );
 });
 
 const canSaveTeam = computed(() => {
-  if (editingTeam.value) {
-    // For editing, only need name
-    return form.value.name.trim() !== "";
-  } else {
-    // For creating, need both name and league
-    return form.value.name.trim() !== "" && form.value.leagueId !== null;
-  }
+  return (
+    form.value.name.trim().length > 0 &&
+    (editingTeam.value ? true : form.value.leagueId !== null)
+  );
 });
 
-// Methods
-const getInitials = (firstName: string, lastName: string): string => {
-  return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
-};
+const canSaveUser = computed(() => {
+  const isValid =
+    userForm.value.vorname.trim().length > 0 &&
+    userForm.value.nachname.trim().length > 0 &&
+    userForm.value.email.trim().length > 0;
+
+  return editingUser.value
+    ? isValid
+    : isValid && userForm.value.password.trim().length > 0;
+});
 
 const openCreateModal = () => {
   editingTeam.value = null;
@@ -428,7 +251,7 @@ const openEditModal = (team: Team) => {
   form.value = {
     name: team.name,
     leagueId: team.leagueId,
-    trainerIds: team.trainers.map((t) => t.uuid),
+    trainerIds: team.trainers?.map((t) => t.uuid) || [],
   };
   trainerSearch.value = "";
   showModal.value = true;
@@ -441,246 +264,489 @@ const closeModal = () => {
   trainerSearch.value = "";
 };
 
-const saveTeam = async () => {
-  if (!canSaveTeam.value) return;
-
-  saving.value = true;
-
-  try {
-    let teamId: number;
-    const teamName = form.value.name.trim();
-
-    if (editingTeam.value) {
-      // Update team name (if needed)
-      teamId = editingTeam.value.id;
-    } else {
-      // Create new team
-      const response = await api.post("/team", {
-        name: teamName,
-        leagueId: form.value.leagueId,
-        trainerIds: form.value.trainerIds,
-      });
-
-      if (response.data.success) {
-        teamId = response.data.teamId;
-      } else {
-        throw new Error("Failed to create team");
-      }
-    }
-
-    // For editing teams, still handle trainer assignments
-    if (editingTeam.value) {
-      await assignTrainersToTeam(teamId);
-    }
-
-    // Refresh teams data to get updated trainers
-    await loadTeams();
-
-    closeModal();
-  } catch (error: any) {
-    console.error("Failed to save team:", error);
-    const errorMessage =
-      error?.response?.data?.error || "Error saving team. Please try again.";
-    alert(errorMessage);
-  } finally {
-    saving.value = false;
-  }
+const openUserCreateModal = () => {
+  editingUser.value = null;
+  userForm.value = {
+    vorname: "",
+    nachname: "",
+    email: "",
+    password: "",
+    teamId: null,
+    positionId: -1,
+  };
+  showUserModal.value = true;
 };
 
-const assignTrainersToTeam = async (teamId: number) => {
-  const assignments: TrainerAssignment[] = [];
+const openUserEditModal = (user: User) => {
+  editingUser.value = user;
+  userForm.value = {
+    vorname: user.vorname,
+    nachname: user.nachname,
+    email: user.email,
+    password: "",
+    teamId: user.mannschaftId || null,
+    positionId: -1,
+  };
+  showUserModal.value = true;
+};
 
-  // 1. Assign selected trainers to the team
-  for (const trainerId of form.value.trainerIds) {
-    try {
-      // Add to team and set position to 8 (trainer)
-      await api.post(`/api/players/${trainerId}/profileData`, {
-        profileData: {
-          mannschaft_id: teamId,
-          position_id: 8, // Trainer position ID
-        },
-      });
-
-      assignments.push({ uuid: trainerId, teamId });
-    } catch (error) {
-      console.error(`Failed to assign trainer ${trainerId}:`, error);
-    }
-  }
-
-  // 2. Remove trainers that were unassigned (if editing)
-  if (editingTeam.value) {
-    const previousTrainers = editingTeam.value.trainers.map((t) => t.uuid);
-    const removedTrainers = previousTrainers.filter(
-      (id) => !form.value.trainerIds.includes(id)
-    );
-
-    for (const trainerId of removedTrainers) {
-      try {
-        // Remove from team and reset position
-        await api.post(`/api/players/${trainerId}/profileData`, {
-          profileData: {
-            mannschaft_id: -1,
-            position_id: -1,
-          },
-        });
-      } catch (error) {
-        console.error(`Failed to unassign trainer ${trainerId}:`, error);
-      }
-    }
-  }
-
-  return assignments;
+const closeUserModal = () => {
+  showUserModal.value = false;
+  editingUser.value = null;
+  userForm.value = {
+    vorname: "",
+    nachname: "",
+    email: "",
+    password: "",
+    teamId: null,
+    positionId: -1,
+  };
+  refreshData();
 };
 
 const confirmDelete = (team: Team) => {
   teamToDelete.value = team;
 };
 
-const deleteTeam = async () => {
-  if (!teamToDelete.value) return;
-
-  try {
-    // Delete team
-    await api.delete(`/team/${teamToDelete.value.id}`);
-
-    // Remove from local state
-    teams.value = teams.value.filter((t) => t.id !== teamToDelete.value!.id);
-    teamToDelete.value = null;
-  } catch (error) {
-    console.error("Failed to delete team:", error);
-    alert("Error deleting team. Please try again.");
-  }
+const confirmUserDelete = (user: User) => {
+  userToDelete.value = user;
 };
 
-const loadLeagues = async () => {
-  try {
-    const response = await api.get("/misc/ligen");
-    leagues.value = response.data.ligen;
-  } catch (error) {
-    console.error("Failed to load leagues:", error);
-    alert("Error loading leagues. Please try again.");
-  }
+const updateForm = (field: keyof typeof form.value, value: any) => {
+  (form.value as any)[field] = value;
 };
 
-// Updated loadTeams function to refresh trainers data
-const loadTeams = async (isRefresh = false) => {
-  if (!isRefresh) {
+const updateUserForm = (field: keyof typeof userForm.value, value: any) => {
+  (userForm.value as any)[field] = value;
+};
+
+const fetchTeams = async () => {
+  try {
     loading.value = true;
-  } else {
-    refreshing.value = true;
-  }
-
-  try {
-    const teamsResponse = await api.get("/team");
-    const allTeams: [
-      {
-        teamId: number;
-        teamName: string;
-        ligaId: number;
-        ligaName: string;
-        trainers: User[];
-      }
-    ] = teamsResponse.data;
-
-    // Load trainers for each team by fetching team players
-    const teamsWithTrainers = await Promise.all(
-      allTeams.map(async (team) => {
-        try {
-          const playersResponse = await api.get(`/team/${team.teamId}/players`);
-
-          const players = playersResponse.data || [];
-
-          const trainers = players.filter(
-            (player: User) => player.position === "Trainer"
-          );
-
-          return {
-            ...team,
-            trainers: trainers,
-          };
-        } catch (error) {
-          console.error(
-            `Failed to load players for team ${team.teamId}:`,
-            error
-          );
-          return {
-            ...team,
-            trainers: [],
-          };
-        }
-      })
-    );
-
-    // Transform to the expected format
-    teams.value = teamsWithTrainers.map((team) => {
+    const response = await api.get("/team");
+    teams.value = response.data.map((team: any) => {
       const league = leagues.value.find((l) => l.id === team.ligaId);
+
       return {
         id: team.teamId,
         name: team.teamName,
         leagueId: team.ligaId,
         leagueName: team.ligaName,
-        leagueLevel: league?.level || 0,
-        trainers: team.trainers,
+        leagueLevel: league ? league.level : 0,
       };
     });
   } catch (error) {
-    console.error("Failed to load teams:", error);
-    if (!isRefresh) {
-      alert("Error loading teams. Please try again.");
-    }
+    console.error("Error fetching teams:", error);
   } finally {
-    if (!isRefresh) {
-      loading.value = false;
-    } else {
-      refreshing.value = false;
-    }
+    loading.value = false;
   }
 };
 
-const loadUsers = async () => {
+const fetchUsers = async () => {
   try {
+    loadingUsers.value = true;
     const response = await api.get("/team/users/all");
-    allUsers.value = response.data;
+
+    const users = response.data as User[];
+    for (const user of users) {
+      playerStore.players.set(user.uuid, user);
+    }
   } catch (error) {
-    console.error("Failed to load users:", error);
-    alert("Error loading users. Please try again.");
+    console.error("Error fetching users:", error);
+  } finally {
+    loadingUsers.value = false;
   }
 };
 
-// Function to start the refresh interval
-const startRefreshInterval = () => {
-  // Clear any existing interval
-  if (refreshInterval) {
-    clearInterval(refreshInterval);
+const fetchLeagues = async () => {
+  try {
+    const response = await api.get("/misc/ligen");
+    leagues.value = response.data.ligen;
+  } catch (error) {
+    console.error("Error fetching leagues:", error);
   }
-
-  // Set up interval to refresh teams every 5 seconds
-  refreshInterval = setInterval(() => {
-    loadTeams(true); // Pass true to indicate this is a refresh
-  }, 5000);
 };
 
-// Function to stop the refresh interval
-const stopRefreshInterval = () => {
-  if (refreshInterval) {
-    clearInterval(refreshInterval);
-    refreshInterval = null;
+const saveTeam = async () => {
+  if (!canSaveTeam.value || saving.value) return;
+
+  try {
+    saving.value = true;
+
+    if (editingTeam.value) {
+      const previousTrainerIds =
+        editingTeam.value.trainers?.map((t) => t.uuid) || [];
+      const selectedTrainerIds = form.value.trainerIds;
+
+      for (const trainerId of selectedTrainerIds) {
+        const trainer = await playerStore.getUser(trainerId);
+        if (!trainer) continue;
+
+        await playerStore.setPlayerProfileData(trainer.uuid, {
+          position_id: 8,
+          mannschaftId: editingTeam.value.id,
+        });
+      }
+
+      const trainersToRemove = previousTrainerIds.filter(
+        (id) => !selectedTrainerIds.includes(id)
+      );
+
+      for (const trainerId of trainersToRemove) {
+        await playerStore.setPlayerProfileData(trainerId, {
+          position_id: -1,
+          mannschaftId: -1,
+        });
+      }
+    } else {
+      await api.post("/team", {
+        name: form.value.name,
+        leagueId: form.value.leagueId,
+      });
+
+      await refreshData();
+
+      const mannschaftId = teams.value.filter((team) => {
+        return team.name === form.value.name;
+      });
+
+      for (const trainerId of form.value.trainerIds) {
+        const trainer = await playerStore.getUser(trainerId);
+        if (!trainer) continue;
+
+        await playerStore.setPlayerProfileData(trainer.uuid, {
+          position_id: 8,
+          mannschaftId: mannschaftId[0].id,
+        });
+      }
+    }
+
+    closeModal();
+    await refreshData();
+  } catch (error) {
+    console.error("Error saving team:", error);
+  } finally {
+    saving.value = false;
   }
+};
+
+const saveUser = async () => {
+  if (!canSaveUser.value || savingUser.value) return;
+
+  try {
+    savingUser.value = true;
+
+    if (editingUser.value) {
+      const updateData: Partial<User> = {
+        vorname: userForm.value.vorname,
+        nachname: userForm.value.nachname,
+        mannschaftId: userForm.value.teamId,
+        position_id: userForm.value.positionId,
+      };
+
+      // Remove null values
+      const cleanUpdateData: Partial<User> = {};
+      if (updateData.vorname !== undefined)
+        cleanUpdateData.vorname = updateData.vorname;
+      if (updateData.nachname !== undefined)
+        cleanUpdateData.nachname = updateData.nachname;
+      if (updateData.mannschaftId !== undefined)
+        cleanUpdateData.mannschaftId = updateData.mannschaftId;
+      if (updateData.position_id !== undefined)
+        cleanUpdateData.position_id = updateData.position_id;
+
+      await api.post(`/api/players/${editingUser.value.uuid}/profileData`, {
+        profileData: cleanUpdateData,
+      });
+
+      const updatedUser = {
+        ...editingUser.value,
+        ...cleanUpdateData,
+        mannschaftName:
+          teams.value.find((t) => t.id === userForm.value.teamId)?.name || null,
+      };
+      playerStore.players.set(editingUser.value.uuid, updatedUser);
+    } else {
+      const response = await api.post("/auth/register", {
+        email: userForm.value.email,
+        password: userForm.value.password,
+        name: `${userForm.value.vorname} ${userForm.value.nachname}`,
+        teamId: userForm.value.teamId,
+        positionId: userForm.value.positionId,
+      });
+
+      // Add new user to store
+      const newUser = response.data.user;
+      playerStore.players.set(newUser.uuid, {
+        ...newUser,
+        mannschaftId: userForm.value.teamId,
+        position_id: userForm.value.positionId,
+        mannschaftName:
+          teams.value.find((t) => t.id === userForm.value.teamId)?.name || null,
+      });
+    }
+
+    closeUserModal();
+  } catch (error) {
+    console.error("Error saving user:", error);
+  } finally {
+    savingUser.value = false;
+  }
+};
+
+const deleteTeam = async () => {
+  if (!teamToDelete.value) return;
+
+  try {
+    await api.delete(`/team/${teamToDelete.value.id}`);
+    teamToDelete.value = null;
+    await fetchTeams();
+  } catch (error) {
+    console.error("Error deleting team:", error);
+  }
+};
+
+const deleteUser = async () => {
+  if (!userToDelete.value) return;
+
+  try {
+    await api.delete(`/users/${userToDelete.value.uuid}`);
+
+    playerStore.players.delete(userToDelete.value.uuid);
+    userToDelete.value = null;
+  } catch (error) {
+    console.error("Error deleting user:", error);
+  }
+};
+
+const refreshData = async () => {
+  refreshing.value = true;
+  await Promise.all([fetchLeagues(), fetchUsers(), fetchTeams()])
+    .then(() => {
+      enrichTeams();
+    })
+    .catch((error) => {
+      console.error("Error refreshing data:", error);
+    })
+    .finally(() => {
+      refreshing.value = false;
+    });
+  refreshing.value = false;
 };
 
 onMounted(async () => {
-  await Promise.all([loadLeagues(), loadUsers()]);
-  await loadTeams();
-
-  startRefreshInterval();
+  await refreshData();
+  refreshInterval = setInterval(refreshData, 30000);
 });
 
 onUnmounted(() => {
-  stopRefreshInterval();
+  if (refreshInterval) clearInterval(refreshInterval);
 });
+
+let refreshInterval: ReturnType<typeof setInterval> | null = null;
 </script>
 
-<style scoped>
+<style>
+.header-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.btn-blue {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.btn-blue:hover:not(:disabled) {
+  background-color: #2563eb;
+}
+
+.tab-nav {
+  display: flex;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 4px;
+  margin-bottom: 24px;
+}
+
+.tab-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border: none;
+  background: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  color: #6b7280;
+  transition: all 0.2s;
+  flex: 1;
+  justify-content: center;
+}
+
+.tab-button:hover {
+  color: #374151;
+  background-color: #f9fafb;
+}
+
+.tab-button.active {
+  background-color: #10b981;
+  color: white;
+}
+
+.team-league {
+  color: #6b7280;
+  font-size: 14px;
+  margin: 4px 0 0 0;
+}
+
+.users-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.users-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 20px;
+}
+
+.user-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 20px;
+  transition: all 0.2s ease;
+  background: #fafafa;
+}
+
+.user-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.user-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.user-avatar-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.user-basic-info h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.user-email {
+  color: #6b7280;
+  font-size: 14px;
+  margin: 4px 0;
+}
+
+.user-role {
+  color: #059669;
+  font-size: 12px;
+  font-weight: 500;
+  margin: 4px 0 0 0;
+}
+
+.user-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.user-details {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.user-team {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.no-users {
+  text-align: center;
+  padding: 48px;
+  color: #6b7280;
+}
+
+.no-users p {
+  margin: 16px 0 24px 0;
+  font-size: 16px;
+}
+
+.league-select,
+.team-select,
+.position-select {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  background: white;
+  box-sizing: border-box;
+}
+
+.league-select:focus,
+.team-select:focus,
+.position-select:focus {
+  outline: none;
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.refresh-indicator {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 8px;
+}
+
+@media (max-width: 640px) {
+  .users-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .user-header {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .user-actions {
+    align-self: flex-end;
+  }
+
+  .header-actions {
+    flex-direction: column;
+  }
+
+  .tab-nav {
+    flex-direction: column;
+  }
+
+  .tab-button {
+    justify-content: flex-start;
+  }
+}
+
 .admin-container {
   padding: 24px;
   max-width: 1200px;
