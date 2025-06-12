@@ -285,7 +285,6 @@ export class PlayerController {
     const { id } = req.params;
 
     try {
-      console.log(req.query.lookbackTime);
       const [
         [spieleRow],
         [toreRow],

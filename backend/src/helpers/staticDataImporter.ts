@@ -222,6 +222,21 @@ export default async function staticDataImporter(pool: mysql.Pool) {
   );
 
   await pool.execute(
+    `INSERT IGNORE INTO GameActions (id_action, action_name)
+      VALUES (35, 'Gelbe Karte');`
+  );
+
+  await pool.execute(
+    `INSERT IGNORE INTO GameActions (id_action, action_name)
+      VALUES (36, 'Ballverlust');`
+  );
+
+  await pool.execute(
+    `INSERT IGNORE INTO GameActions (id_action, action_name)
+      VALUES (37, 'Freie Würfe');`
+  );
+
+  await pool.execute(
     `INSERT IGNORE INTO Liga (id, Name, Stufe, Anzahl_Mannschaften)
     VALUES (-1, 'Keine Liga', -1, -1)`
   );

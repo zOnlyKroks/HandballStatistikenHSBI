@@ -1,4 +1,4 @@
-const maxLen: number = 45;
+const maxLen: number = 37;
 const validGameActionsListParade: string[] = [
   "Parade 9m",
   "Parade 7m",
@@ -42,6 +42,9 @@ const validGameActionsListSonstige: string[] = [
   "Technischer Fehler",
   "Fehlpass",
   "Stoppfoul",
+  "Gelbe Karte",
+  "Ballverlust",
+  "Freie Würfe",
 ];
 
 export class dataSet {

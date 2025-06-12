@@ -21,6 +21,12 @@
                 Mannschaft
               </button>
               <button
+                :class="['nav-tab', { active: currentView === 'comparison' }]"
+                @click="switchView('comparison')"
+              >
+                Spielervergleich
+              </button>
+              <button
                 v-if="authUserIsTrainer()"
                 :class="['nav-tab', { active: currentView === 'management' }]"
                 @click="switchView('management')"
@@ -92,6 +98,10 @@
         v-else-if="currentView === 'team'"
         :key="`team-${viewKey}-${lookbackVersion}`"
       />
+      <PlayerComparison
+        v-else-if="currentView === 'comparison'"
+        :key="`comparison-${viewKey}`"
+      />
       <PlayerManagement
         v-else-if="currentView === 'management'"
         :key="`management-${viewKey}-${lookbackVersion}`"
@@ -114,17 +124,22 @@ import PlayerManagement from "./PlayerManagement.vue";
 import AdminManagement from "./AdminManagement.vue";
 import { LookbackSettings } from "./util/LookbackSettings";
 import { usePlayerStore } from "../stores/playerStore";
+import PlayerComparison from "./PlayerComparison.vue";
 
 const selectedOption = ref<
   "option1" | "option2" | "option3" | "option4" | "option5"
 >("option1");
-const currentView = ref<"team" | "player" | "management" | "admin">("player");
+const currentView = ref<
+  "team" | "player" | "comparison" | "management" | "admin"
+>("player");
 const lookbackVersion = ref(0);
 const viewKey = ref(0);
 const store = useAuthStore();
 const playerStore = usePlayerStore();
 
-const switchView = (view: "team" | "player" | "management" | "admin") => {
+const switchView = (
+  view: "team" | "player" | "comparison" | "management" | "admin"
+) => {
   if (currentView.value !== view) {
     viewKey.value++;
   }

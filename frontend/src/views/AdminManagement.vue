@@ -510,7 +510,7 @@ const deleteUser = async () => {
   if (!userToDelete.value) return;
 
   try {
-    await api.delete(`/users/${userToDelete.value.uuid}`);
+    await api.delete(`/api/players/${userToDelete.value.uuid}`);
 
     playerStore.players.delete(userToDelete.value.uuid);
     userToDelete.value = null;

@@ -10,12 +10,10 @@ export default class AuthDBSqlStatements {
     LIMIT 1
   `;
 
-  // Liga queries
   static CREATE_LIGA_IF_NOT_EXISTS = `
     INSERT IGNORE INTO \`Liga\` (Name, Stufe, Anzahl_Mannschaften) VALUES (?, ?, ?)
   `;
 
-  // Mannschaft queries - Fixed to use Liga_id instead of Liga_Name
   static CREATE_MANNSCHAFT_IF_NOT_EXISTS = `
     INSERT IGNORE INTO \`Mannschaft\` (Name, Liga_id) VALUES (?, ?)
   `;
@@ -25,7 +23,12 @@ export default class AuthDBSqlStatements {
     INSERT IGNORE INTO \`GamePosition\` (id, position_title) VALUES (?, ?)
   `;
 
-  // User queries - Fixed to match your actual table structure
+  static DOES_USER_EXIST_BY_NAME = `
+    SELECT COUNT(*) AS count
+    FROM \`User\`
+    WHERE vorname = ? AND nachname = ?
+    `;
+
   static CREATE_USER = `
     INSERT INTO \`User\` (
       uuid,
@@ -40,7 +43,6 @@ export default class AuthDBSqlStatements {
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
   `;
 
-  // BlacklistedTokens queries - Fixed column name
   static INSERT_BLACKLISTED_TOKEN = `
     INSERT INTO \`BlacklistedTokens\`
     (authUserUuid, token, createdAt, updatedAt, expiresAt)

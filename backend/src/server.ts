@@ -9,6 +9,9 @@ import nodeCron from "node-cron";
 import staticDataImporter from "./helpers/staticDataImporter";
 import createTables from "./helpers/tableCreator";
 import { importDataSets } from "./importer/importHandler";
+import { v4 as uuidv4 } from "uuid";
+import bcrypt from "bcrypt";
+import AuthDBSqlStatements from "./sql/auth/authSqlStatements";
 
 const app = express();
 
@@ -100,6 +103,8 @@ async function start() {
 
     await importDataSets(pool);
 
+    await insertDefaultAdminUser();
+
     setupCronjobs();
     const PORT = process.env.PORT || 3001;
 
@@ -123,6 +128,44 @@ process.on("SIGTERM", async () => {
   await pool.end();
   process.exit(0);
 });
+
+async function insertDefaultAdminUser() {
+  const [rows] = await pool.query<mysql.RowDataPacket[]>(
+    AuthDBSqlStatements.DOES_USER_EXIST_BY_NAME,
+    ["Finn", "Rades"]
+  );
+
+  const userExists = ((rows as any)[0] as any).count > 0;
+
+  if (userExists) return;
+
+  const authUserUuid = uuidv4();
+  const hashedPassword = await bcrypt.hash("123456", 10);
+
+  await pool.execute<mysql.ResultSetHeader>(
+    AuthDBSqlStatements.CREATE_AUTHUSER,
+    [authUserUuid, `finn@rades.de`, hashedPassword]
+  );
+
+  const sanitize = (val: any) => (val === undefined ? null : val);
+
+  const values = [
+    sanitize(authUserUuid),
+    sanitize("Finn"),
+    sanitize("Rades"),
+    sanitize(-1),
+    sanitize("1900-01-01"),
+    sanitize(-1),
+    sanitize(-1),
+    sanitize(-1),
+    true,
+  ];
+
+  await pool.execute<mysql.ResultSetHeader>(
+    AuthDBSqlStatements.CREATE_USER,
+    values
+  );
+}
 
 export { pool };
 
