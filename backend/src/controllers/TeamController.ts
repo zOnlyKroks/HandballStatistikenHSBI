@@ -199,7 +199,6 @@ WHERE u.mannschaft_id IS NULL OR u.mannschaft_id = -1
 
       const teamId = teamResult.insertId;
 
-      // Add trainers to team
       if (trainerIds && trainerIds.length > 0) {
         await conn.execute(TeamDBSqlStatements.ADD_TRAINERS_TO_TEAM, [
           teamId,

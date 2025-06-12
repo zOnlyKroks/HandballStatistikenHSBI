@@ -40,7 +40,7 @@ export default class TeamDBSqlStatements {
 
   static readonly ADD_TRAINERS_TO_TEAM = `
     UPDATE \`User\`
-    SET mannschaft_id = ?
+    SET mannschaft_id = ?, position_id = 8
     WHERE uuid IN (?);
   `;
 
