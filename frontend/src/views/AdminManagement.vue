@@ -345,7 +345,7 @@ const fetchTeams = async () => {
 const fetchUsers = async () => {
   try {
     loadingUsers.value = true;
-    const response = await api.get("/team/users/all");
+    const response = await api.get("/api/users/all");
 
     const users = response.data as User[];
     for (const user of users) {

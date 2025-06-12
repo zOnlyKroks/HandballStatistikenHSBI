@@ -68,6 +68,8 @@ export interface User {
     zeitstrafen: number;
     roteKarten: number;
     paradeQuote: number;
+    paraden: number;
+    gegnerWuerfe: number;
   };
 }
 

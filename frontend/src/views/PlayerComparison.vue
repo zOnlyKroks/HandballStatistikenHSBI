@@ -221,7 +221,7 @@ async function fetchAllPlayers() {
   try {
     loadingPlayers.value = true;
 
-    const response = await api.get("/team/users/all");
+    const response = await api.get("/api/users/all");
     const basicPlayers: User[] = response.data;
 
     const detailedPlayers = await Promise.all(

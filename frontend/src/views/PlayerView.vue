@@ -178,11 +178,6 @@
             </div>
 
             <div class="stat-card stat-green">
-              <p class="stat-label">Parade Quote</p>
-              <p class="stat-value">{{ baseStats?.paradeQuote || 0 }}</p>
-            </div>
-
-            <div class="stat-card stat-green">
               <p class="stat-label">Tore</p>
               <p class="stat-value">{{ baseStats?.tore || 0 }}</p>
               <p class="stat-description">Gesamt erzielt</p>
@@ -195,118 +190,153 @@
             </div>
           </div>
         </div>
-
-        <!-- Shooting Accuracy Card -->
-        <div v-if="accuracy" class="card">
-          <h3 class="card-title">
-            <svg
-              class="icon"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M13 10V3L4 14h7v7l9-11h-7z"
-              />
-            </svg>
-            Schussgenauigkeit
-          </h3>
-
-          <div class="performance-grid">
-            <div class="performance-item performance-blue">
-              <p class="performance-label">Gesamte Würfe</p>
-              <p class="performance-value">{{ accuracy.gesamtSchuesse }}</p>
-            </div>
-
-            <div class="performance-item performance-green">
-              <p class="performance-label">Gesamte Tore</p>
-              <p class="performance-value">{{ accuracy.schuesseAufZiel }}</p>
-            </div>
-
-            <div class="performance-item performance-purple">
-              <p class="performance-label">Treffer Genauigkeit</p>
-              <p class="performance-value">
-                {{ accuracy.genauigkeitProzent }}%
-              </p>
-            </div>
-          </div>
-
-          <div class="mt-4">
-            <div class="label mb-2">Trefferquote Visualisierung</div>
-            <div
-              style="
-                background-color: #e5e7eb;
-                height: 8px;
-                border-radius: 4px;
-                overflow: hidden;
-              "
-            >
-              <div
-                :style="{
-                  width: accuracy.genauigkeitProzent + '%',
-                  backgroundColor:
-                    accuracy.genauigkeitProzent >= 70
-                      ? '#10b981'
-                      : accuracy.genauigkeitProzent >= 50
-                      ? '#f59e0b'
-                      : '#ef4444',
-                  height: '100%',
-                  transition: 'width 0.3s ease',
-                }"
-              ></div>
-            </div>
-            <p class="mt-2" style="font-size: 0.875rem; color: #6b7280">
-              {{ accuracyStatus }}
-            </p>
-          </div>
-        </div>
-
-        <div v-else class="card">
-          <h3 class="card-title">
-            <svg
-              class="icon"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M13 10V3L4 14h7v7l9-11h-7z"
-              />
-            </svg>
-            Schussgenauigkeit
-          </h3>
-          <p class="card-subtitle">Daten werden geladen...</p>
-        </div>
       </div>
     </div>
   </div>
 
-  <div v-else class="view-container">
-    <div class="card text-center">
-      <div style="padding: 2rem">
-        <svg
-          class="icon"
-          style="width: 3rem; height: 3rem; margin: 0 auto 1rem; color: #9ca3af"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-          />
-        </svg>
-        <h3>Spielerdaten werden geladen...</h3>
-        <p class="card-subtitle">Einen Moment bitte</p>
+  <!-- Shooting Accuracy Card -->
+  <div v-if="accuracy" class="card">
+    <h3 class="card-title">
+      <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M13 10V3L4 14h7v7l9-11h-7z"
+        />
+      </svg>
+      Schussgenauigkeit
+    </h3>
+
+    <div class="performance-grid">
+      <div class="performance-item performance-blue">
+        <p class="performance-label">Gesamte Würfe</p>
+        <p class="performance-value">{{ accuracy.gesamtSchuesse }}</p>
       </div>
+
+      <div class="performance-item performance-green">
+        <p class="performance-label">Gesamte Tore</p>
+        <p class="performance-value">{{ accuracy.schuesseAufZiel }}</p>
+      </div>
+
+      <div class="performance-item performance-purple">
+        <p class="performance-label">Treffer Genauigkeit</p>
+        <p class="performance-value">{{ accuracy.genauigkeitProzent }}%</p>
+      </div>
+    </div>
+
+    <div class="mt-4">
+      <div class="label mb-2">Trefferquote Visualisierung</div>
+      <div
+        style="
+          background-color: #e5e7eb;
+          height: 8px;
+          border-radius: 4px;
+          overflow: hidden;
+        "
+      >
+        <div
+          :style="{
+            width: accuracy.genauigkeitProzent + '%',
+            backgroundColor:
+              accuracy.genauigkeitProzent >= 70
+                ? '#10b981'
+                : accuracy.genauigkeitProzent >= 50
+                ? '#f59e0b'
+                : '#ef4444',
+            height: '100%',
+            transition: 'width 0.3s ease',
+          }"
+        ></div>
+      </div>
+      <p class="mt-2" style="font-size: 0.875rem; color: #6b7280">
+        {{ accuracyStatus }}
+      </p>
+    </div>
+  </div>
+
+  <div v-else class="card">
+    <h3 class="card-title">
+      <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M13 10V3L4 14h7v7l9-11h-7z"
+        />
+      </svg>
+      Schussgenauigkeit
+    </h3>
+    <p class="card-subtitle">Daten werden geladen...</p>
+  </div>
+
+  <div
+    v-if="
+      baseStats &&
+      baseStats.paradeQuote !== undefined &&
+      player?.position_id === 1
+    "
+    class="card"
+    style="margin-top: 20px"
+  >
+    <h3 class="card-title">
+      <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11"
+        />
+      </svg>
+      Torwartstatistiken
+    </h3>
+
+    <div class="performance-grid">
+      <div class="performance-item performance-blue">
+        <p class="performance-label">Paraden</p>
+        <p class="performance-value">{{ baseStats.paraden || 0 }}</p>
+      </div>
+
+      <div class="performance-item performance-green">
+        <p class="performance-label">Gegner Würfe</p>
+        <p class="performance-value">{{ baseStats.gegnerWuerfe || 0 }}</p>
+      </div>
+
+      <div class="performance-item performance-purple">
+        <p class="performance-label">Paradequote</p>
+        <p class="performance-value">
+          {{ baseStats.paradeQuote ? baseStats.paradeQuote : 0 }}%
+        </p>
+      </div>
+    </div>
+
+    <div class="mt-4">
+      <div class="label mb-2">Paradequote Visualisierung</div>
+      <div
+        style="
+          background-color: #e5e7eb;
+          height: 8px;
+          border-radius: 4px;
+          overflow: hidden;
+        "
+      >
+        <div
+          :style="{
+            width: (baseStats.paradeQuote || 0) + '%',
+            backgroundColor:
+              (baseStats.paradeQuote || 0) >= 70
+                ? '#10b981'
+                : (baseStats.paradeQuote || 0) >= 50
+                ? '#f59e0b'
+                : '#ef4444',
+            height: '100%',
+            transition: 'width 0.3s ease',
+          }"
+        ></div>
+      </div>
+      <p class="mt-2" style="font-size: 0.875rem; color: #6b7280">
+        {{ goalkeeperStatus }}
+      </p>
     </div>
   </div>
 </template>
@@ -341,6 +371,16 @@ function onImageError() {
 
 const baseStats = computed(() => player.value?.statistics || null);
 const accuracy = computed(() => player.value?.accuracy || null);
+
+const goalkeeperStatus = computed(() => {
+  if (!baseStats.value || baseStats.value.paradeQuote === undefined) return "";
+  const percent = baseStats.value.paradeQuote;
+  return percent >= 70
+    ? "Hervorragende Paradequote"
+    : percent >= 50
+    ? "Durchschnittliche Paradequote"
+    : "Verbesserungspotential";
+});
 
 const accuracyStatus = computed(() => {
   if (!accuracy.value) return "";

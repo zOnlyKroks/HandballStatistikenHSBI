@@ -92,36 +92,6 @@ export class PlayerController {
   }
 
   /**
-   * GET /api/players/:uuid/basic
-   */
-  static async getBasic(req: Request, res: Response): Promise<Response> {
-    const { id } = req.params;
-    try {
-      const [players] = await pool.query<RowDataPacket[]>(
-        ProfileDBSqlStatements.GET_PARTIAL_PROFILE,
-        [id]
-      );
-      if (players.length === 0) {
-        return res.status(404).json({
-          success: false,
-          message: "Player not found",
-        });
-      }
-      const playerData = players[0] as AuthUser;
-      return res.status(200).json({
-        success: true,
-        player: playerData,
-      });
-    } catch (error) {
-      console.error("Get basic player error:", error);
-      return res.status(500).json({
-        success: false,
-        message: "Server error",
-      });
-    }
-  }
-
-  /**
    * GET /api/positions
    * Returns all available position titles
    */
@@ -162,6 +132,18 @@ export class PlayerController {
       return res.status(500).json({ success: false, message: "Server error" });
     } finally {
       conn.release();
+    }
+  }
+
+  static async getAllUsers(req: Request, res: Response): Promise<Response> {
+    try {
+      const [rows] = await pool.query<RowDataPacket[]>(
+        ProfileDBSqlStatements.GET_ALL_USERS
+      );
+      return res.status(200).json(rows);
+    } catch (error) {
+      console.error("Get all users error:", error);
+      return res.status(500).json({ error: "Server error" });
     }
   }
 
@@ -281,6 +263,8 @@ export class PlayerController {
     zeitstrafen: number;
     roteKarten: number;
     paradeQuote: number;
+    paraden: number;
+    gegnerWuerfe: number;
   }> {
     const { id } = req.params;
 
@@ -357,9 +341,9 @@ export class PlayerController {
       const zeitstrafen = zeitRow[0]?.zeitstrafen || 0;
       const roteKarten = rotRow[0]?.roteKarten || 0;
 
-      const paraden = saveRow[0]?.paraden || 0;
-      const gegnerWuerfe = saveRow[0]?.gegnerWuerfe || 0;
-      const paradeQuote = gegnerWuerfe ? paraden / gegnerWuerfe : 0;
+      const paraden = saveRow[0]?.Parade_Aktionen || 0;
+      const gegnerWuerfe = saveRow[0]?.Gegentor_Aktionen || 0;
+      const paradenQuote = saveRow[0]?.Paradequote_in_Prozent || 0;
 
       return {
         spiele,
@@ -369,7 +353,9 @@ export class PlayerController {
         quoteSeven: parseFloat(quoteSeven.toFixed(2)),
         zeitstrafen,
         roteKarten,
-        paradeQuote: parseFloat(paradeQuote.toFixed(2)),
+        paraden: paraden,
+        gegnerWuerfe: gegnerWuerfe,
+        paradeQuote: paradenQuote,
       };
     } catch (error) {
       console.error("Get player base stats error:", error);
@@ -382,6 +368,8 @@ export class PlayerController {
         zeitstrafen: 0,
         roteKarten: 0,
         paradeQuote: 0,
+        paraden: 0,
+        gegnerWuerfe: 0,
       };
     }
   }

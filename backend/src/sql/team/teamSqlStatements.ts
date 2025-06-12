@@ -49,24 +49,6 @@ export default class TeamDBSqlStatements {
     WHERE id = ?;
   `;
 
-  static readonly GET_ALL_USERS = `
-    SELECT
-      au.UUID AS uuid,
-      au.Email AS email,
-      u.vorname,
-      u.nachname,
-      u.koerpergroesse,
-      u.geburtsdatum,
-      u.trikotnummer,
-      gp.position_title AS position,
-      u.profileImage,
-      m.Name as teamName
-    FROM AuthUser au
-    JOIN \`User\` u ON au.UUID = u.uuid
-    LEFT JOIN GamePosition gp ON u.position_id = gp.id
-    LEFT JOIN Mannschaft m ON u.mannschaft_id = m.id
-  `;
-
   static readonly GET_TEAM_BY_ID = `
     SELECT 
       m.id,

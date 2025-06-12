@@ -255,16 +255,4 @@ WHERE u.mannschaft_id IS NULL OR u.mannschaft_id = -1
       if (conn) conn.release();
     }
   }
-
-  static async getAllUsers(req: Request, res: Response): Promise<Response> {
-    try {
-      const [rows] = await pool.query<RowDataPacket[]>(
-        TeamDBSqlStatements.GET_ALL_USERS
-      );
-      return res.status(200).json(rows);
-    } catch (error) {
-      console.error("Get all users error:", error);
-      return res.status(500).json({ error: "Server error" });
-    }
-  }
 }

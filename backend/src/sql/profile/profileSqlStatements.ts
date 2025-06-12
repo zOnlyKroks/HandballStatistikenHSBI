@@ -35,6 +35,24 @@ export default class ProfileDBSqlStatements {
     WHERE au.UUID = ?
   `;
 
+  static readonly GET_ALL_USERS = `
+    SELECT
+      au.UUID AS uuid,
+      au.Email AS email,
+      u.vorname,
+      u.nachname,
+      u.koerpergroesse,
+      u.geburtsdatum,
+      u.trikotnummer,
+      gp.position_title AS position,
+      u.profileImage,
+      m.Name as teamName
+    FROM AuthUser au
+    JOIN \`User\` u ON au.UUID = u.uuid
+    LEFT JOIN GamePosition gp ON u.position_id = gp.id
+    LEFT JOIN Mannschaft m ON u.mannschaft_id = m.id
+  `;
+
   static SET_PROFILE_DATA = `
     UPDATE \`User\`
     SET
@@ -217,25 +235,33 @@ export default class ProfileDBSqlStatements {
 
   static GET_SAVE_QUOTE = (limit: string) => `
     SELECT 
-      SUM(CASE WHEN ga.action_name = 'Parade' THEN 1 ELSE 0 END) AS paraden,
-      SUM(CASE WHEN ga.action_name IN (
-        'Parade', 'Tor 6m', 'Tor 7m', 'Tor 9m', 'Tor Flügel', 'Tor Gegenstoß', 'Tor Durchbruch'
-      ) THEN 1 ELSE 0 END) AS gegnerWuerfe
-    FROM Spielbericht sb
-    JOIN Mannschaft m ON sb.Mannschaft_id = m.id
-    JOIN User u ON u.mannschaft_id = m.id
-    JOIN (
-      SELECT sb_recent.idSpiel
-      FROM Spielbericht sb_recent
-      JOIN User u_recent ON sb_recent.Mannschaft_id = u_recent.mannschaft_id
-      WHERE u_recent.uuid = ?
-      ORDER BY sb_recent.datum DESC
-      LIMIT ${Number(limit)}
-    ) AS recent_games ON sb.idSpiel = recent_games.idSpiel
-    LEFT JOIN GameSituation gs ON gs.game_report_id = sb.idSpiel
-      AND gs.first_name = u.vorname AND gs.last_name = u.nachname
-    LEFT JOIN GameActions ga ON gs.action_id = ga.id_action
-    WHERE u.uuid = ?
+  SUM(CASE WHEN ga.action_name LIKE 'Gegentor%' THEN 1 ELSE 0 END) AS Gegentor_Aktionen,
+  SUM(CASE WHEN ga.action_name LIKE 'Parade%' THEN 1 ELSE 0 END) AS Parade_Aktionen,
+  CASE 
+    WHEN (SUM(CASE WHEN ga.action_name LIKE 'Parade%' THEN 1 ELSE 0 END) + SUM(CASE WHEN ga.action_name LIKE 'Gegentor%' THEN 1 ELSE 0 END)) = 0 THEN NULL
+    ELSE ROUND(
+      SUM(CASE WHEN ga.action_name LIKE 'Parade%' THEN 1 ELSE 0 END) * 100.0 /
+      (SUM(CASE WHEN ga.action_name LIKE 'Parade%' THEN 1 ELSE 0 END) + SUM(CASE WHEN ga.action_name LIKE 'Gegentor%' THEN 1 ELSE 0 END)), 
+      2
+    )
+  END AS Paradequote_in_Prozent
+FROM Spielbericht sb
+JOIN Mannschaft m ON sb.Mannschaft_id = m.id
+JOIN User u ON u.mannschaft_id = m.id
+JOIN (
+  SELECT sb_recent.idSpiel
+  FROM Spielbericht sb_recent
+  JOIN User u_recent ON sb_recent.Mannschaft_id = u_recent.mannschaft_id
+  WHERE u_recent.uuid = ?
+  ORDER BY sb_recent.datum DESC
+  LIMIT ${Number(limit)}
+) AS recent_games ON sb.idSpiel = recent_games.idSpiel
+LEFT JOIN GameSituation gs 
+  ON gs.game_report_id = sb.idSpiel 
+  AND gs.first_name = u.vorname 
+  AND gs.last_name = u.nachname
+LEFT JOIN GameActions ga ON gs.action_id = ga.id_action
+WHERE u.uuid = ?
   `;
 
   static GET_POSITIONS = `

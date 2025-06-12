@@ -18,18 +18,6 @@ router.get(
 );
 
 router.get(
-  "/players/:id/basic",
-  async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      await PlayerController.getBasic(req, res);
-    } catch (error) {
-      console.error("Error getting basic player data:", error);
-      next(error);
-    }
-  }
-);
-
-router.get(
   "/positions",
   async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -72,6 +60,17 @@ router.post(
       await PlayerController.setProfileImage(req, res);
     } catch (error) {
       console.error("Error setting profile image:", error);
+      next(error);
+    }
+  }
+);
+
+router.get(
+  "/users/all",
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      await PlayerController.getAllUsers(req, res);
+    } catch (error) {
       next(error);
     }
   }

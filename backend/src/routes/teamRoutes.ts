@@ -63,15 +63,4 @@ router.delete(
   }
 );
 
-router.get(
-  "/users/all",
-  async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      await TeamController.getAllUsers(req, res);
-    } catch (error) {
-      next(error);
-    }
-  }
-);
-
 export default router;
