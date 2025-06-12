@@ -23,7 +23,8 @@ async function handleInsertDataSet(
   connection: mysql.Connection,
   dataSet: dataSet,
   gameReportId: number,
-  teamId: number = -1
+  teamId: number = -1,
+  fullPath: string
 ): Promise<void> {
   try {
     const gameAction = dataSet.getGameAction();
@@ -57,11 +58,18 @@ async function handleInsertDataSet(
 
     const playerNameParts = playerName.trim().split(" ");
 
-    const firstName = replaceUmlauts(playerNameParts[0] || "");
-    const lastName =
+    let firstName = replaceUmlauts(playerNameParts[0] || "");
+    let lastName =
       playerNameParts.length > 1
         ? replaceUmlauts(playerNameParts.slice(1).join(" "))
         : "";
+
+    if(fullPath.includes("VfL Herford 1")) { // Flippen der Vor und Nachnamen für erste Herren Mannschaft
+      const help = firstName;
+      firstName = lastName;
+      lastName = help;
+    }
+     
 
     const insertGameSituationQuery = `
       INSERT INTO GameSituation (game_report_id, action_id, timestamp, first_name, last_name)
@@ -272,7 +280,8 @@ export async function importDataSets(pool: mysql.Pool): Promise<number> {
             connection,
             dataSet,
             gameReportId.insertID,
-            gameReportId.mannschaftId
+            gameReportId.mannschaftId,
+            fullPath
           );
           insertedCount++;
         } catch (err) {
